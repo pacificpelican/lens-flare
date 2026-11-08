@@ -68,7 +68,7 @@ export const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCap
               
               // Add a timeout to detect if video never actually plays
               playTimeout = setTimeout(() => {
-                if (videoRef.current && !videoRef.current.playing) {
+                if (videoRef.current && videoRef.current.paused) {
                   setError('Camera stream initialized but video is not playing. Check your browser permissions.');
                   setIsCameraReady(false);
                 }

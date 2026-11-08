@@ -71,7 +71,7 @@ export const UnauthenticatedCameraModal: React.FC<UnauthenticatedCameraModalProp
 
     // Add timeout to detect if video stream doesn't start playing
     playTimeoutRef.current = setTimeout(() => {
-      if (videoRef.current && !videoRef.current.playing) {
+      if (videoRef.current && videoRef.current.paused) {
         setError('Camera stream initialized but video is not playing. Check your browser permissions.');
         setIsActive(false);
         if (streamRef.current) {
@@ -119,7 +119,7 @@ export const UnauthenticatedCameraModal: React.FC<UnauthenticatedCameraModalProp
       const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
 
       // Try Web Share API if available
-      if (navigator.share) {
+      if (typeof navigator !== 'undefined' && navigator.share) {
         await navigator.share({
           files: [file],
           title: 'Photo from Lens Flare',
@@ -239,7 +239,7 @@ export const UnauthenticatedCameraModal: React.FC<UnauthenticatedCameraModalProp
                 Retake
               </Button>
 
-              {navigator.share ? (
+              {!!navigator?.share ? (
                 <Button onClick={sharePhoto}>Share</Button>
               ) : (
                 <Button onClick={downloadPhoto}>Download</Button>

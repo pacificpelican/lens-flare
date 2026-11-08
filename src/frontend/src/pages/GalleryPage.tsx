@@ -5,6 +5,8 @@ import { Photo, PaginatedResponse } from '@shared/types';
 import apiClient from '../services/api';
 import { PhotoGrid } from '../components/PhotoGrid';
 import { CameraModal } from '../components/CameraModal';
+import { SearchBar } from '../components/SearchBar';
+import { FilterPanel } from '../components/FilterPanel';
 import { Button } from '../components/Button';
 import './GalleryPage.css';
 
@@ -18,16 +20,40 @@ export const GalleryPage: React.FC = () => {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilters, setActiveFilters] = useState<{
+    search?: string;
+    tags?: string[];
+    startDate?: string;
+    endDate?: string;
+    cameraModel?: string;
+    iso?: number;
+  }>({});
 
   useEffect(() => {
     loadPhotos();
-  }, [page]);
+  }, [page, activeFilters]);
 
   const loadPhotos = async () => {
     try {
       setIsLoading(true);
+      // Build query string with filters
+      const params = new URLSearchParams();
+      params.append('page', page.toString());
+      params.append('perPage', '20');
+      
+      if (activeFilters.search) params.append('search', activeFilters.search);
+      if (activeFilters.startDate) params.append('startDate', activeFilters.startDate);
+      if (activeFilters.endDate) params.append('endDate', activeFilters.endDate);
+      if (activeFilters.cameraModel) params.append('cameraModel', activeFilters.cameraModel);
+      if (activeFilters.iso) params.append('iso', activeFilters.iso.toString());
+      if (activeFilters.tags && activeFilters.tags.length > 0) {
+        activeFilters.tags.forEach(tag => params.append('tags', tag));
+      }
+
       const response = await apiClient.get<PaginatedResponse<Photo>>(
-        `/api/photos?page=${page}&perPage=20`
+        `/api/photos?${params.toString()}`
       );
       setPhotos(response.data);
       setTotalPages(response.pagination.total_pages);
@@ -36,6 +62,23 @@ export const GalleryPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setPage(1);
+    setActiveFilters((prev) => ({
+      ...prev,
+      search: query || undefined,
+    }));
+  };
+
+  const handleApplyFilters = (filters: any) => {
+    setPage(1);
+    setActiveFilters({
+      search: activeFilters.search,
+      ...filters,
+    });
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,6 +196,18 @@ export const GalleryPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Search and Filter Section */}
+      <div className="gallery-search-section">
+        <SearchBar onSearch={handleSearch} placeholder="Search photos..." />
+        <button 
+          className="gallery-filter-btn"
+          onClick={() => setIsFilterOpen(true)}
+          title="Open filters"
+        >
+          🔧 Filters
+        </button>
+      </div>
+
       {/* Photo Grid */}
       <PhotoGrid photos={photos} isLoading={isLoading} onPhotoClick={handlePhotoClick} />
 
@@ -184,6 +239,13 @@ export const GalleryPage: React.FC = () => {
         isOpen={isCameraOpen}
         onClose={() => setIsCameraOpen(false)}
         onCapture={handleCameraCapture}
+      />
+
+      {/* Filter Panel */}
+      <FilterPanel 
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApplyFilters={handleApplyFilters}
       />
     </div>
   );

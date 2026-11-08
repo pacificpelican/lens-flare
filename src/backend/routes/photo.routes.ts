@@ -65,6 +65,10 @@ export function createPhotoRoutes(
     photoController.list(req, res)
   );
 
+  router.get('/options/filters', authMiddleware, (req: Request, res: Response) =>
+    photoController.getFilterOptions(req, res)
+  );
+
   router.get('/:id', authMiddleware, (req: Request, res: Response) =>
     photoController.getDetail(req, res)
   );

@@ -86,12 +86,28 @@ export class PhotoController {
       const sortBy = (req.query.sortBy as 'upload_date' | 'created_at') || 'upload_date';
       const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
 
+      // Parse filter parameters
+      const tagsParam = req.query.tags;
+      const tagsArray = tagsParam 
+        ? (Array.isArray(tagsParam) ? tagsParam.map(t => String(t)) : [String(tagsParam)])
+        : undefined;
+
+      const filters = {
+        search: req.query.search as string | undefined,
+        tags: tagsArray,
+        startDate: req.query.startDate as string | undefined,
+        endDate: req.query.endDate as string | undefined,
+        cameraModel: req.query.cameraModel as string | undefined,
+        iso: req.query.iso ? parseInt(req.query.iso as string) : undefined,
+      };
+
       const { photos, total, totalPages } = await this.photoService.listPhotos(
         req.user.user_id,
         page,
         perPage,
         sortBy,
-        sortOrder
+        sortOrder,
+        filters
       );
 
       const response: PaginatedResponse<Photo> = {
@@ -109,6 +125,22 @@ export class PhotoController {
     } catch (error) {
       console.error('List photos error:', error);
       res.status(500).json({ success: false, error: 'Failed to fetch photos' });
+    }
+  }
+
+  async getFilterOptions(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ success: false, error: 'Not authenticated' });
+        return;
+      }
+
+      const options = await this.photoService.getFilterOptions(req.user.user_id);
+
+      res.status(200).json({ success: true, data: options });
+    } catch (error) {
+      console.error('Get filter options error:', error);
+      res.status(500).json({ success: false, error: 'Failed to fetch filter options' });
     }
   }
 

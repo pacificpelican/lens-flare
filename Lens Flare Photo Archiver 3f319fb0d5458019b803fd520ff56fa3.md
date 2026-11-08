@@ -1,4 +1,4 @@
-# Lens Flare Photo Archiver
+# Pic Photo Archiver
 
 Last edited time: November 7, 2026 3:21 PM
 Status: Planning
@@ -8,7 +8,7 @@ Category: web app
 
 ## About this project
 
-- Lens-Flare: a tool for archiving, sorting, and editing digital photos
+- Pic (called Lens Flare in previous plans): a tool for archiving, sorting, and editing digital photos
 - offer some of the same functionality of Aperture (or iPhoto, or Windows Photos Legacy, or Photos.app, or Lightroom)
     - download photos from camera (SD/microSD card drive on hardware via web or system APIs)
     - support for modern photo formats: .heic, Canon raw formats, Nikon raw formats, webP, AVIF, along with legacy formats like jpg, GIF, and png
@@ -37,3 +37,4 @@ Category: web app
     > 
 - 
 - design concept: use translucency where helpful; sharper corners on most UI elements; light grays in backgrounds; visible, glassy border around photo previews on contact sheet; no border around photo on photo's page; reasonably large type, mostly sans; warn before deletion; long press or mouseover on contact sheet image puts shows larger preview of image on screen; purple for accent color when that can work.
+- on the photo's page there should be a user-editable field for a (user) description, kind of semi-hidden because there may also be the AI description, also you should be able to add tags to the photos, and of course delete the photo and its data

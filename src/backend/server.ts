@@ -6,6 +6,8 @@ import { createDatabase } from './db/database.js';
 import { initializeSchema } from './db/schema.js';
 import { AuthService } from './services/auth.service.js';
 import { PhotoService } from './services/photo.service.js';
+import { ExifService } from './services/exif.service.js';
+import { AiDescriptionService } from './services/ai-description.service.js';
 import { AuthController } from './controllers/auth.controller.js';
 import { PhotoController } from './controllers/photo.controller.js';
 import { createAuthRoutes } from './routes/auth.routes.js';
@@ -29,11 +31,20 @@ async function bootstrap() {
   // Create services
   const authService = new AuthService(db, config.jwtSecret, config.refreshTokenSecret);
   const photoService = new PhotoService(db);
+  const exifService = new ExifService();
+  const aiDescriptionService = new AiDescriptionService(config.ai);
+
+  // Log AI configuration
+  if (aiDescriptionService.isEnabled()) {
+    console.log(`🤖 AI enabled: ${config.ai.provider} (model: ${config.ai.model})`);
+  } else {
+    console.log('🤖 AI disabled');
+  }
 
   // Create controllers
   const authController = new AuthController(db, authService);
   const uploadDir = path.join(process.cwd(), 'uploads');
-  const photoController = new PhotoController(photoService, uploadDir);
+  const photoController = new PhotoController(photoService, exifService, aiDescriptionService, uploadDir);
 
   // Create middleware
   const authMiddleware = createAuthMiddleware(authService);

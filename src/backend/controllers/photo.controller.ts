@@ -1,11 +1,18 @@
 import { Request, Response } from 'express';
 import { PhotoService } from '../services/photo.service.js';
+import { ExifService } from '../services/exif.service.js';
+import { AiDescriptionService } from '../services/ai-description.service.js';
 import { PaginatedResponse, Photo, PhotoDetail } from '@shared/types';
 import fs from 'fs/promises';
 import path from 'path';
 
 export class PhotoController {
-  constructor(private photoService: PhotoService, private uploadDir: string) {}
+  constructor(
+    private photoService: PhotoService,
+    private exifService: ExifService,
+    private aiDescriptionService: AiDescriptionService,
+    private uploadDir: string
+  ) {}
 
   async upload(req: Request, res: Response): Promise<void> {
     try {
@@ -25,6 +32,30 @@ export class PhotoController {
       const mimeType = req.file.mimetype;
       const fileSize = req.file.size;
 
+      // Extract EXIF data
+      let exifData: Record<string, unknown> | undefined;
+      try {
+        const filePath = path.join(this.uploadDir, filename);
+        const exifRaw = await this.exifService.extractExif(filePath);
+        if (exifRaw) {
+          exifData = this.exifService.formatExifForDisplay(exifRaw) as Record<string, unknown>;
+        }
+      } catch (error) {
+        // EXIF extraction failed - continue without it
+        console.warn('EXIF extraction warning:', error instanceof Error ? error.message : 'unknown error');
+      }
+
+      // Generate AI description (async, don't wait)
+      let aiDescription: string | undefined;
+      try {
+        const filePath = path.join(this.uploadDir, filename);
+        const imageBuffer = await fs.readFile(filePath);
+        aiDescription = (await this.aiDescriptionService.generateDescription(imageBuffer, filename)) || undefined;
+      } catch (error) {
+        // AI description generation failed - continue without it
+        console.warn('AI description warning:', error instanceof Error ? error.message : 'unknown error');
+      }
+
       const photo = await this.photoService.createPhoto({
         userId: req.user.user_id,
         filename,
@@ -32,6 +63,8 @@ export class PhotoController {
         title: title || originalFilename.replace(/\.[^/.]+$/, ''),
         mimeType,
         fileSize,
+        exifData,
+        aiDescription,
       });
 
       res.status(201).json({ success: true, data: photo });

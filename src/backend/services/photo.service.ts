@@ -13,20 +13,22 @@ export class PhotoService {
     mimeType: string;
     fileSize: number;
     exifData?: Record<string, unknown>;
+    aiDescription?: string;
   }): Promise<Photo> {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     const uploadDate = now;
 
     await this.db.run(
-      `INSERT INTO photos (id, user_id, filename, original_filename, title, exif_data, file_size, mime_type, upload_date, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO photos (id, user_id, filename, original_filename, title, ai_description, exif_data, file_size, mime_type, upload_date, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         data.userId,
         data.filename,
         data.originalFilename,
         data.title,
+        data.aiDescription || null,
         data.exifData ? JSON.stringify(data.exifData) : null,
         data.fileSize,
         data.mimeType,

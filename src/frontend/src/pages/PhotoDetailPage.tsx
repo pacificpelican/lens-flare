@@ -23,6 +23,7 @@ export const PhotoDetailPage: React.FC = () => {
   const [showEditor, setShowEditor] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [isExifExpanded, setIsExifExpanded] = useState(false);
 
   useEffect(() => {
     loadPhoto();
@@ -261,15 +262,25 @@ export const PhotoDetailPage: React.FC = () => {
           {/* EXIF Data */}
           {photo.exif_data && (
             <div className="photo-detail-section">
-              <label className="photo-detail-label">Photo Info</label>
-              <div className="photo-detail-exif">
-                {Object.entries(photo.exif_data).map(([key, value]) => (
-                  <div key={key} className="photo-detail-exif-row">
-                    <span className="photo-detail-exif-key">{key}:</span>
-                    <span className="photo-detail-exif-value">{String(value)}</span>
-                  </div>
-                ))}
-              </div>
+              <button 
+                className="photo-detail-label photo-detail-collapsible"
+                onClick={() => setIsExifExpanded(!isExifExpanded)}
+              >
+                <span className="photo-detail-collapse-arrow">
+                  {isExifExpanded ? '▼' : '▶'}
+                </span>
+                Photo Info
+              </button>
+              {isExifExpanded && (
+                <div className="photo-detail-exif">
+                  {Object.entries(photo.exif_data).map(([key, value]) => (
+                    <div key={key} className="photo-detail-exif-row">
+                      <span className="photo-detail-exif-key">{key}:</span>
+                      <span className="photo-detail-exif-value">{String(value)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

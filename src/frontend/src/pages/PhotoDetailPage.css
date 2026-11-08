@@ -98,6 +98,33 @@
   letter-spacing: 0.5px;
 }
 
+.photo-detail-collapsible {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color 0.2s ease;
+}
+
+.photo-detail-collapsible:hover {
+  color: #7c3aed;
+}
+
+.photo-detail-collapse-arrow {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  transition: transform 0.2s ease;
+}
+
 .photo-detail-input,
 .photo-detail-textarea {
   font-family: inherit;

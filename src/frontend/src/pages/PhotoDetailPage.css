@@ -36,14 +36,6 @@
   justify-content: center;
 }
 
-.photo-detail-settings-btn:hover {
-  transform: scale(1.15);
-}
-
-.photo-detail-settings-btn:active {
-  transform: scale(0.95);
-}
-
 .photo-detail-container {
   display: grid;
   grid-template-columns: 1fr 420px;

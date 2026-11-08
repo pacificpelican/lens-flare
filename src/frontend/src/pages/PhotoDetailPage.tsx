@@ -193,13 +193,9 @@ export const PhotoDetailPage: React.FC = () => {
         </Button>
         <div className="header-spacer" />
         <div className="header-button-group">
-          <button 
-            className="photo-detail-settings-btn"
-            onClick={() => setShowSettings(true)}
-            title="Settings"
-          >
-            ⚙️
-          </button>
+          <Button variant="primary" size="sm" onClick={() => setShowSettings(true)} title="Settings">
+            ⚙️ Settings
+          </Button>
           <Button variant="primary" size="sm" onClick={() => setShowExport(true)}>
             ⬇️ Export
           </Button>

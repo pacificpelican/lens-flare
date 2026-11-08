@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
@@ -55,14 +55,24 @@ function AppRoutes() {
   );
 }
 
+function AppContent() {
+  const location = useLocation();
+  // Don't show global footer on landing page (has its own footer)
+  const showFooter = location.pathname !== '/';
+
+  return (
+    <div className="app-container">
+      <AppRoutes />
+      {showFooter && <Footer />}
+    </div>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <div className="app-container">
-          <AppRoutes />
-          <Footer />
-        </div>
+        <AppContent />
       </AuthProvider>
     </BrowserRouter>
   );

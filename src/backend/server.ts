@@ -73,6 +73,27 @@ async function bootstrap() {
     res.json({ success: true, message: 'Server is running' });
   });
 
+  // System info endpoint (debug)
+  app.get('/api/system-info', (req, res) => {
+    res.json({
+      success: true,
+      data: {
+        database: {
+          type: config.database.type,
+        },
+        ai: {
+          enabled: aiDescriptionService.isEnabled(),
+          provider: config.ai.provider,
+          model: config.ai.model,
+        },
+        php: {
+          available: false,
+        },
+        environment: config.nodeEnv,
+      },
+    });
+  });
+
   // Error handling middleware
   app.use((err: any, req: any, res: any, next: any) => {
     console.error('Error:', err);

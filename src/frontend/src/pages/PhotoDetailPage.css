@@ -18,6 +18,32 @@
   flex: 1;
 }
 
+.header-button-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.photo-detail-settings-btn {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-detail-settings-btn:hover {
+  transform: scale(1.15);
+}
+
+.photo-detail-settings-btn:active {
+  transform: scale(0.95);
+}
+
 .photo-detail-container {
   display: grid;
   grid-template-columns: 1fr 420px;

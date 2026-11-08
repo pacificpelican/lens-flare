@@ -4,6 +4,8 @@ import { PhotoDetail, Tag } from '@shared/types';
 import apiClient from '../services/api';
 import { Button } from '../components/Button.js';
 import { ImageEditor } from '../components/ImageEditor.js';
+import { ExportDialog, ExportOptions } from '../components/ExportDialog.js';
+import { SettingsDialog } from '../components/SettingsDialog.js';
 import './PhotoDetailPage.css';
 
 export const PhotoDetailPage: React.FC = () => {
@@ -19,6 +21,8 @@ export const PhotoDetailPage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     loadPhoto();
@@ -135,6 +139,35 @@ export const PhotoDetailPage: React.FC = () => {
     }
   };
 
+  const handleExport = async (options: ExportOptions) => {
+    if (!photoId) return;
+    try {
+      const response = await apiClient.post(
+        `/api/photos/${photoId}/export`,
+        {
+          format: options.format,
+          quality: options.quality,
+        },
+        {
+          responseType: 'blob' as any,
+        }
+      );
+
+      // Create blob download
+      const url = window.URL.createObjectURL(response as Blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${photo?.title || 'photo'}-${Date.now()}.${options.format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      throw error;
+    }
+  };
+
   if (isLoading) {
     return <div className="photo-detail-loading">Loading photo...</div>;
   }
@@ -158,9 +191,21 @@ export const PhotoDetailPage: React.FC = () => {
           ← Back
         </Button>
         <div className="header-spacer" />
-        <Button variant="primary" size="sm" onClick={() => setShowEditor(true)}>
-          ✏️ Edit
-        </Button>
+        <div className="header-button-group">
+          <button 
+            className="photo-detail-settings-btn"
+            onClick={() => setShowSettings(true)}
+            title="Settings"
+          >
+            ⚙️
+          </button>
+          <Button variant="primary" size="sm" onClick={() => setShowExport(true)}>
+            ⬇️ Export
+          </Button>
+          <Button variant="primary" size="sm" onClick={() => setShowEditor(true)}>
+            ✏️ Edit
+          </Button>
+        </div>
       </header>
 
       <div className="photo-detail-container">
@@ -326,13 +371,25 @@ export const PhotoDetailPage: React.FC = () => {
         </div>
       </div>
 
-              {showEditor && (
-                <ImageEditor
-                  imageUrl={photoUrl}
-                  onClose={() => setShowEditor(false)}
-                  onSave={handleEditorSave}
-                />
-              )}
-            </div>
+      {showEditor && (
+        <ImageEditor
+          imageUrl={photoUrl}
+          onClose={() => setShowEditor(false)}
+          onSave={handleEditorSave}
+        />
+      )}
+
+      <ExportDialog
+        isOpen={showExport}
+        photoTitle={photo?.title || 'photo'}
+        onExport={handleExport}
+        onClose={() => setShowExport(false)}
+      />
+
+      <SettingsDialog
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
+    </div>
   );
 };

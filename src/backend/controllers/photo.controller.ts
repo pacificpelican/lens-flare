@@ -358,4 +358,93 @@ export class PhotoController {
       res.status(500).json({ success: false, error: 'Failed to replace photo' });
     }
   }
+
+  async export(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ success: false, error: 'Not authenticated' });
+        return;
+      }
+
+      const { id } = req.params;
+      const { format = 'jpeg', quality = 80 } = req.body as {
+        format?: string;
+        quality?: number;
+      };
+
+      // Validate format
+      const validFormats = ['jpeg', 'png', 'webp', 'avif', 'tiff'];
+      if (!validFormats.includes(format)) {
+        res.status(400).json({ success: false, error: 'Invalid export format' });
+        return;
+      }
+
+      // Validate quality (1-100)
+      const qualityValue = Math.max(1, Math.min(100, quality || 80));
+
+      // Get photo details
+      const photo = await this.photoService.getPhoto(id, req.user.user_id);
+      if (!photo) {
+        res.status(404).json({ success: false, error: 'Photo not found' });
+        return;
+      }
+
+      // Read original file
+      const filePath = path.join(this.uploadDir, photo.filename);
+      const imageBuffer = await fs.readFile(filePath);
+
+      // Import Sharp dynamically to avoid circular dependencies
+      const sharp = (await import('sharp')).default;
+
+      // Convert and export
+      let exportBuffer: Buffer;
+      let contentType: string;
+      let fileExtension: string;
+
+      const sharpImage = sharp(imageBuffer);
+
+      switch (format) {
+        case 'png':
+          contentType = 'image/png';
+          fileExtension = 'png';
+          exportBuffer = await sharpImage.png().toBuffer();
+          break;
+
+        case 'webp':
+          contentType = 'image/webp';
+          fileExtension = 'webp';
+          exportBuffer = await sharpImage.webp({ quality: qualityValue }).toBuffer();
+          break;
+
+        case 'avif':
+          contentType = 'image/avif';
+          fileExtension = 'avif';
+          exportBuffer = await sharpImage.avif({ quality: qualityValue }).toBuffer();
+          break;
+
+        case 'tiff':
+          contentType = 'image/tiff';
+          fileExtension = 'tiff';
+          exportBuffer = await sharpImage.tiff().toBuffer();
+          break;
+
+        case 'jpeg':
+        default:
+          contentType = 'image/jpeg';
+          fileExtension = 'jpeg';
+          exportBuffer = await sharpImage.jpeg({ quality: qualityValue, progressive: true }).toBuffer();
+          break;
+      }
+
+      // Send file for download
+      const filename = `${photo.title || 'photo'}-${Date.now()}.${fileExtension}`;
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Length', exportBuffer.length);
+      res.send(exportBuffer);
+    } catch (error) {
+      console.error('Export error:', error);
+      res.status(500).json({ success: false, error: 'Export failed' });
+    }
+  }
 }

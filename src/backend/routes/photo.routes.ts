@@ -95,6 +95,11 @@ export function createPhotoRoutes(
     photoController.replacePhoto(req, res)
   );
 
+  // Export photo in different format
+  router.post('/:id/export', authMiddleware, (req: Request, res: Response) =>
+    photoController.export(req, res)
+  );
+
   // Serve uploaded files
   router.get('/files/:filename', (req: Request, res: Response) =>
     photoController.serveFile(req, res)

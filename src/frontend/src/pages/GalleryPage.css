@@ -54,6 +54,26 @@
   transform: scale(0.95);
 }
 
+.gallery-settings-btn {
+  background: none;
+  border: none;
+  font-size: 1.75rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gallery-settings-btn:hover {
+  transform: scale(1.15);
+}
+
+.gallery-settings-btn:active {
+  transform: scale(0.95);
+}
+
 .gallery-user-info {
   display: flex;
   flex-direction: column;

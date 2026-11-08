@@ -7,6 +7,7 @@ import { PhotoGrid } from '../components/PhotoGrid';
 import { CameraModal } from '../components/CameraModal';
 import { SearchBar } from '../components/SearchBar';
 import { FilterPanel } from '../components/FilterPanel';
+import { SettingsDialog } from '../components/SettingsDialog.js';
 import { Button } from '../components/Button';
 import './GalleryPage.css';
 
@@ -30,6 +31,7 @@ export const GalleryPage: React.FC = () => {
     cameraModel?: string;
     iso?: number;
   }>({});
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     loadPhotos();
@@ -166,6 +168,13 @@ export const GalleryPage: React.FC = () => {
             >
               📷
             </button>
+            <button 
+              className="gallery-settings-btn"
+              onClick={() => setShowSettings(true)}
+              title="Settings"
+            >
+              ⚙️
+            </button>
             <div className="gallery-user-info">
               {user && <span className="gallery-user-email">{user.email}</span>}
             </div>
@@ -246,6 +255,12 @@ export const GalleryPage: React.FC = () => {
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         onApplyFilters={handleApplyFilters}
+      />
+
+      {/* Settings Dialog */}
+      <SettingsDialog 
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
       />
     </div>
   );

@@ -22,22 +22,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Check if user is already logged in on mount
   useEffect(() => {
+    let isMounted = true;
+
     const initializeAuth = async () => {
       const token = localStorage.getItem('access_token');
-      if (token) {
-        try {
-          const currentUser = await apiClient.getCurrentUser();
-          setUser(currentUser);
-        } catch (err) {
-          // Token is invalid, clear it
-          localStorage.removeItem('access_token');
-          setUser(null);
-        }
+      
+      // Create a promise that resolves when the auth check completes or times out
+      const authPromise = token 
+        ? apiClient.getCurrentUser()
+          .then(user => isMounted && setUser(user))
+          .catch(err => {
+            if (isMounted) {
+              localStorage.removeItem('access_token');
+              setUser(null);
+            }
+          })
+        : Promise.resolve();
+
+      // Set a timeout to force completion after 10 seconds
+      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 10000));
+      
+      await Promise.race([authPromise, timeoutPromise]);
+      
+      if (isMounted) {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     initializeAuth();
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const register = async (data: RegisterRequest) => {

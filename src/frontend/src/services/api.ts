@@ -39,8 +39,9 @@ export class ApiClient {
       async (error: AxiosError) => {
         const originalRequest = error.config as any;
 
-        // Only refresh on 401 and if we haven't already tried
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Only refresh on 401 if we sent an auth header and haven't already tried
+        const hadAuthHeader = originalRequest.headers?.Authorization?.startsWith('Bearer ');
+        if (error.response?.status === 401 && !originalRequest._retry && hadAuthHeader) {
           if (this.isRefreshing) {
             // Wait for token refresh to complete
             return new Promise((resolve) => {

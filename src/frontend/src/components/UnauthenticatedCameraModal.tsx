@@ -37,14 +37,28 @@ export const UnauthenticatedCameraModal: React.FC<UnauthenticatedCameraModalProp
         console.log('Video tracks:', stream.getVideoTracks());
         
         streamRef.current = stream;
-        if (videoRef.current) {
-          console.log('Attaching stream to video element');
-          videoRef.current.srcObject = stream;
-          console.log('Video element srcObject set');
-        } else {
-          console.error('videoRef.current is null');
-        }
-        setIsActive(true);
+        
+        // Wait for video element to be available, with retries
+        let retries = 0;
+        const attachStream = () => {
+          if (videoRef.current) {
+            console.log('Attaching stream to video element');
+            videoRef.current.srcObject = stream;
+            console.log('Video element srcObject set');
+            setIsActive(true);
+          } else if (retries < 5) {
+            retries++;
+            console.log('Waiting for video ref... retry', retries);
+            setTimeout(attachStream, 100);
+          } else {
+            console.error('videoRef.current is null after retries');
+            setError('Failed to initialize camera - video element not ready');
+            stream.getTracks().forEach((track) => track.stop());
+            streamRef.current = null;
+          }
+        };
+        
+        attachStream();
       } catch (err: any) {
         console.error('Camera initialization error:', err);
         setError(
@@ -236,18 +250,16 @@ export const UnauthenticatedCameraModal: React.FC<UnauthenticatedCameraModalProp
         {!photoCapture ? (
           <div className="unauth-camera-modal-camera">
             <div className="unauth-camera-preview">
-              {isActive ? (
-                <>
-                  <video
-                    ref={videoRef}
-                    onLoadedMetadata={handleLoadedMetadata}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="unauth-camera-video"
-                  />
-                </>
-              ) : (
+              <video
+                ref={videoRef}
+                onLoadedMetadata={handleLoadedMetadata}
+                autoPlay
+                playsInline
+                muted
+                className="unauth-camera-video"
+                style={{ display: isActive ? 'block' : 'none' }}
+              />
+              {!isActive && (
                 <div className="unauth-camera-placeholder">
                   <svg
                     width="80"

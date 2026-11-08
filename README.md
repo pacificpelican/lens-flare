@@ -196,7 +196,7 @@ See `.env.example` for all options. Key variables:
 | `AI_ENABLED` | Enable AI features | `true` |
 | `AI_PROVIDER` | `ollama`, `openai`, `anthropic` | `ollama` |
 | `OLLAMA_ENDPOINT` | Local Ollama server | `http://localhost:11434` |
-| `OLLAMA_MODEL` | Ollama model name | `llava-phi` |
+| `OLLAMA_MODEL` | Ollama model name | `llava:latest` |
 
 ### Database Configuration
 
@@ -223,7 +223,7 @@ MYSQL_DATABASE=lens_flare
 AI_ENABLED=true
 AI_PROVIDER=ollama
 OLLAMA_ENDPOINT=http://localhost:11434
-OLLAMA_MODEL=llava-phi
+OLLAMA_MODEL=llava:latest
 ```
 
 **OpenAI (cloud):**

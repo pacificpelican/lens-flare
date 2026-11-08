@@ -83,25 +83,51 @@ export const UnauthenticatedCameraModal: React.FC<UnauthenticatedCameraModalProp
 
   const capturePhoto = () => {
     if (!videoRef.current || !canvasRef.current) {
+      setError('Camera reference not available');
       return;
     }
 
     setCapturing(true);
 
     try {
-      const context = canvasRef.current.getContext('2d');
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+      
       if (!context) {
+        setError('Failed to get canvas context');
+        setCapturing(false);
         return;
       }
 
-      canvasRef.current.width = videoRef.current.videoWidth;
-      canvasRef.current.height = videoRef.current.videoHeight;
-      context.drawImage(videoRef.current, 0, 0);
+      // Ensure video has valid dimensions
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        setError('Video stream not ready. Please wait a moment and try again.');
+        setCapturing(false);
+        return;
+      }
 
-      const imageData = canvasRef.current.toDataURL('image/jpeg', 0.95);
+      // Set canvas dimensions to match video
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      // Draw the current video frame to canvas
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Convert canvas to JPEG data URL
+      const imageData = canvas.toDataURL('image/jpeg', 0.95);
+      
+      // Verify we got valid image data
+      if (!imageData || imageData.length < 100) {
+        setError('Failed to capture photo - image data invalid');
+        setCapturing(false);
+        return;
+      }
+
       setPhotoCapture(imageData);
       setCapturing(false);
     } catch (err) {
+      console.error('Photo capture error:', err);
       setError('Failed to capture photo');
       setCapturing(false);
     }

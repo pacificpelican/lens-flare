@@ -110,26 +110,51 @@ export const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCap
   }, [isOpen]);
 
   const handleCapture = () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current) {
+      setError('Camera reference not available');
+      return;
+    }
 
-    const context = canvasRef.current.getContext('2d');
-    if (!context) return;
+    try {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+      
+      if (!context) {
+        setError('Failed to get canvas context');
+        return;
+      }
 
-    canvasRef.current.width = videoRef.current.videoWidth;
-    canvasRef.current.height = videoRef.current.videoHeight;
+      // Ensure video has valid dimensions
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        setError('Video stream not ready. Please wait a moment and try again.');
+        return;
+      }
 
-    context.drawImage(videoRef.current, 0, 0);
+      // Set canvas dimensions to match video
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
-    canvasRef.current.toBlob(
-      (blob) => {
-        if (blob) {
-          onCapture(blob);
-          handleClose();
-        }
-      },
-      'image/jpeg',
-      0.95
-    );
+      // Draw the current video frame to canvas
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Convert canvas to blob and upload
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            onCapture(blob);
+            handleClose();
+          } else {
+            setError('Failed to convert image data');
+          }
+        },
+        'image/jpeg',
+        0.95
+      );
+    } catch (err) {
+      console.error('Photo capture error:', err);
+      setError('Failed to capture photo');
+    }
   };
 
   const handleClose = () => {

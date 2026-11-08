@@ -28,16 +28,25 @@ export const UnauthenticatedCameraModal: React.FC<UnauthenticatedCameraModalProp
     const initializeCamera = async () => {
       try {
         setError(null);
+        console.log('Requesting camera access...');
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'user' },
           audio: false,
         });
+        console.log('Camera stream received:', stream);
+        console.log('Video tracks:', stream.getVideoTracks());
+        
         streamRef.current = stream;
         if (videoRef.current) {
+          console.log('Attaching stream to video element');
           videoRef.current.srcObject = stream;
+          console.log('Video element srcObject set');
+        } else {
+          console.error('videoRef.current is null');
         }
         setIsActive(true);
       } catch (err: any) {
+        console.error('Camera initialization error:', err);
         setError(
           err.name === 'NotAllowedError'
             ? 'Camera permission denied. Please enable camera access in your browser settings.'
@@ -64,18 +73,27 @@ export const UnauthenticatedCameraModal: React.FC<UnauthenticatedCameraModalProp
 
   const handleLoadedMetadata = () => {
     if (videoRef.current) {
-      videoRef.current.play().catch(() => {
-        // Error is handled by timeout below
-      });
+      // Attempt to play the video
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.error('Video play error:', err);
+          setError('Unable to play camera stream. Check browser permissions.');
+        });
+      }
     }
 
     // Add timeout to detect if video stream doesn't start playing
     playTimeoutRef.current = setTimeout(() => {
-      if (videoRef.current && videoRef.current.paused) {
-        setError('Camera stream initialized but video is not playing. Check your browser permissions.');
-        setIsActive(false);
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach((track) => track.stop());
+      if (videoRef.current) {
+        // Check if video has content
+        if (videoRef.current.paused || videoRef.current.videoWidth === 0) {
+          console.error('Video not playing or has no width. paused:', videoRef.current.paused, 'width:', videoRef.current.videoWidth);
+          setError('Camera stream initialized but video is not playing. Check your browser permissions.');
+          setIsActive(false);
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach((track) => track.stop());
+          }
         }
       }
     }, 2000);
@@ -225,6 +243,7 @@ export const UnauthenticatedCameraModal: React.FC<UnauthenticatedCameraModalProp
                     onLoadedMetadata={handleLoadedMetadata}
                     autoPlay
                     playsInline
+                    muted
                     className="unauth-camera-video"
                   />
                 </>

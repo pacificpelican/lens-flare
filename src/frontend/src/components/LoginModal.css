@@ -1,0 +1,146 @@
+.login-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.login-modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: white;
+  border-radius: 8px;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.login-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b7280;
+  transition: color 0.2s ease;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-modal-close:hover {
+  color: #111827;
+}
+
+.login-modal-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-modal-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.login-modal-subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+.login-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.login-modal-error {
+  padding: 0.75rem 1rem;
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.login-modal-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.login-modal-checkbox input[type='checkbox'] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.login-modal-checkbox label {
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.login-modal-footer {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.login-modal-footer-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.login-modal-switch {
+  background: none;
+  border: none;
+  color: #7c3aed;
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding: 0;
+  font: inherit;
+}
+
+.login-modal-switch:hover {
+  color: #6d28d9;
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .login-modal-content {
+    margin: 1rem;
+    max-width: none;
+  }
+}

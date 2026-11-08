@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { GalleryPage } from './pages/GalleryPage';
@@ -49,7 +50,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="/" element={isAuthenticated ? <Navigate to="/gallery" replace /> : <Navigate to="/login" replace />} />
+      <Route path="/" element={isAuthenticated ? <Navigate to="/gallery" replace /> : <LandingPage />} />
     </Routes>
   );
 }

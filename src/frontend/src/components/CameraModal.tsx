@@ -15,7 +15,10 @@ export const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCap
   const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
-    if (!isOpen) return;
+    console.log('CameraModal: isCameraReady state changed to:', isCameraReady);
+  }, [isCameraReady]);
+
+  useEffect(() => {
 
     let playTimeout: NodeJS.Timeout | null = null;
 
@@ -54,26 +57,32 @@ export const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCap
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
+          console.log('CameraModal: Video srcObject set');
           
           // Handle video element errors
           videoRef.current.onerror = () => {
+            console.log('CameraModal: Video onerror fired');
             setError('Failed to display video stream. Please try again or check your camera.');
             setIsCameraReady(false);
           };
 
           videoRef.current.onloadedmetadata = () => {
+            console.log('CameraModal: onloadedmetadata fired, videoWidth:', videoRef.current?.videoWidth, 'videoHeight:', videoRef.current?.videoHeight);
             // Make sure video has dimensions before marking as ready
             if (videoRef.current && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
+              console.log('CameraModal: Setting isCameraReady to true');
               setIsCameraReady(true);
               
               // Add a timeout to detect if video never actually plays
               playTimeout = setTimeout(() => {
                 if (videoRef.current && videoRef.current.paused) {
+                  console.log('CameraModal: Video paused at timeout check');
                   setError('Camera stream initialized but video is not playing. Check your browser permissions.');
                   setIsCameraReady(false);
                 }
               }, 2000);
             } else {
+              console.log('CameraModal: Video dimensions invalid or missing');
               setError('Camera stream loaded but no valid video data received.');
               setIsCameraReady(false);
             }

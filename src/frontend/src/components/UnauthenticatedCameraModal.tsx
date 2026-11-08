@@ -20,6 +20,16 @@ export const UnauthenticatedCameraModal: React.FC<UnauthenticatedCameraModalProp
   const streamRef = useRef<MediaStream | null>(null);
   const playTimeoutRef = useRef<NodeJS.Timeout>();
 
+  // Log state changes for debugging
+  useEffect(() => {
+    console.log('isActive state changed:', isActive);
+    if (isActive && videoRef.current) {
+      console.log('Video element in DOM:', videoRef.current);
+      console.log('Video element computed style display:', window.getComputedStyle(videoRef.current).display);
+      console.log('Video element offsetWidth/offsetHeight:', videoRef.current.offsetWidth, videoRef.current.offsetHeight);
+    }
+  }, [isActive]);
+
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -45,7 +55,9 @@ export const UnauthenticatedCameraModal: React.FC<UnauthenticatedCameraModalProp
             console.log('Attaching stream to video element');
             videoRef.current.srcObject = stream;
             console.log('Video element srcObject set');
+            console.log('About to call setIsActive(true)');
             setIsActive(true);
+            console.log('setIsActive(true) called');
           } else if (retries < 5) {
             retries++;
             console.log('Waiting for video ref... retry', retries);
@@ -280,8 +292,20 @@ export const UnauthenticatedCameraModal: React.FC<UnauthenticatedCameraModalProp
                 autoPlay
                 playsInline
                 muted
-                className="unauth-camera-video"
-                style={{ display: isActive ? 'block' : 'none' }}
+                preload="metadata"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  opacity: isActive ? 1 : 0,
+                  pointerEvents: isActive ? 'auto' : 'none',
+                  transition: 'opacity 0.3s ease',
+                  backgroundColor: 'transparent',
+                  display: 'block'
+                }}
               />
               {!isActive && (
                 <div className="unauth-camera-placeholder">

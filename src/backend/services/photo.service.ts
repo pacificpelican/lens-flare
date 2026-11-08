@@ -235,6 +235,54 @@ export class PhotoService {
     }
   }
 
+  async updatePhotoFile(
+    photoId: string,
+    userId: string,
+    data: {
+      filename: string;
+      mimeType: string;
+      fileSize: number;
+      exifData?: Record<string, unknown>;
+      aiDescription?: string;
+    }
+  ): Promise<Photo> {
+    const photo = await this.getPhoto(photoId, userId);
+
+    const updates: string[] = [];
+    const params: unknown[] = [];
+
+    updates.push('filename = ?');
+    params.push(data.filename);
+
+    updates.push('mime_type = ?');
+    params.push(data.mimeType);
+
+    updates.push('file_size = ?');
+    params.push(data.fileSize);
+
+    if (data.exifData !== undefined) {
+      updates.push('exif_data = ?');
+      params.push(data.exifData ? JSON.stringify(data.exifData) : null);
+    }
+
+    if (data.aiDescription !== undefined) {
+      updates.push('ai_description = ?');
+      params.push(data.aiDescription);
+    }
+
+    updates.push('updated_at = ?');
+    params.push(new Date().toISOString());
+    params.push(photoId);
+    params.push(userId);
+
+    await this.db.run(
+      `UPDATE photos SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`,
+      params
+    );
+
+    return this.getPhoto(photoId, userId);
+  }
+
   async addTag(photoId: string, userId: string, tagName: string): Promise<Tag> {
     // Verify photo belongs to user
     await this.getPhoto(photoId, userId);

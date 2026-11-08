@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PhotoDetail, Tag } from '@shared/types';
 import apiClient from '../services/api';
-import { Button } from '../components/Button';
+import { Button } from '../components/Button.js';
+import { ImageEditor } from '../components/ImageEditor.js';
 import './PhotoDetailPage.css';
 
 export const PhotoDetailPage: React.FC = () => {
@@ -17,6 +18,7 @@ export const PhotoDetailPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
 
   useEffect(() => {
     loadPhoto();
@@ -111,6 +113,28 @@ export const PhotoDetailPage: React.FC = () => {
     }
   };
 
+  const handleEditorSave = async (editedImageBlob: Blob) => {
+    if (!photoId) return;
+    try {
+      setIsSaving(true);
+      const formData = new FormData();
+      formData.append('file', editedImageBlob, 'edited.jpg');
+
+      await apiClient.post(`/api/photos/${photoId}/replace`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      setShowEditor(false);
+      await loadPhoto();
+      alert('Photo updated successfully!');
+    } catch (err) {
+      console.error('Failed to save edited photo:', err);
+      alert('Failed to save edited photo');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (isLoading) {
     return <div className="photo-detail-loading">Loading photo...</div>;
   }
@@ -132,6 +156,10 @@ export const PhotoDetailPage: React.FC = () => {
       <header className="photo-detail-header">
         <Button variant="secondary" size="sm" onClick={() => navigate('/gallery')}>
           ← Back
+        </Button>
+        <div className="header-spacer" />
+        <Button variant="primary" size="sm" onClick={() => setShowEditor(true)}>
+          ✏️ Edit
         </Button>
       </header>
 
@@ -297,6 +325,14 @@ export const PhotoDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+
+              {showEditor && (
+                <ImageEditor
+                  imageUrl={photoUrl}
+                  onClose={() => setShowEditor(false)}
+                  onSave={handleEditorSave}
+                />
+              )}
+            </div>
   );
 };

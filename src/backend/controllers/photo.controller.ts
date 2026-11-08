@@ -286,4 +286,76 @@ export class PhotoController {
       res.status(404).json({ success: false, error: 'File not found' });
     }
   }
+
+  async replacePhoto(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ success: false, error: 'Not authenticated' });
+        return;
+      }
+
+      const { id } = req.params;
+
+      if (!req.file) {
+        res.status(400).json({ success: false, error: 'No file uploaded' });
+        return;
+      }
+
+      // Get the existing photo to verify ownership
+      const existingPhoto = await this.photoService.getPhotoDetail(id, req.user.user_id);
+      if (!existingPhoto) {
+        res.status(404).json({ success: false, error: 'Photo not found' });
+        return;
+      }
+
+      // Delete old file
+      try {
+        const oldFilePath = path.join(this.uploadDir, existingPhoto.filename);
+        await fs.unlink(oldFilePath);
+      } catch {
+        // Old file might not exist, that's ok
+      }
+
+      // Update database with new filename
+      const newFilename = req.file.filename;
+      const mimeType = req.file.mimetype;
+      const fileSize = req.file.size;
+
+      // Extract EXIF data from edited image
+      let exifData: Record<string, unknown> | undefined;
+      try {
+        const filePath = path.join(this.uploadDir, newFilename);
+        const exifRaw = await this.exifService.extractExif(filePath);
+        if (exifRaw) {
+          exifData = this.exifService.formatExifForDisplay(exifRaw) as Record<string, unknown>;
+        }
+      } catch (error) {
+        console.warn('EXIF extraction warning:', error instanceof Error ? error.message : 'unknown error');
+      }
+
+      // Generate new AI description for edited image
+      let aiDescription: string | undefined;
+      try {
+        const filePath = path.join(this.uploadDir, newFilename);
+        const imageBuffer = await fs.readFile(filePath);
+        aiDescription = (await this.aiDescriptionService.generateDescription(imageBuffer, newFilename)) || undefined;
+      } catch (error) {
+        console.warn('AI description warning:', error instanceof Error ? error.message : 'unknown error');
+      }
+
+      // Update photo record
+      const updatedPhoto = await this.photoService.updatePhotoFile(id, req.user.user_id, {
+        filename: newFilename,
+        mimeType,
+        fileSize,
+        exifData,
+        aiDescription,
+      });
+
+      res.status(200).json({ success: true, data: updatedPhoto });
+    } catch (error) {
+      console.error('Replace photo error:', error);
+      res.status(500).json({ success: false, error: 'Failed to replace photo' });
+    }
+  }
 }

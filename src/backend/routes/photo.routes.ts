@@ -90,6 +90,11 @@ export function createPhotoRoutes(
     photoController.removeTag(req, res)
   );
 
+  // Replace photo file (for edited photos)
+  router.post('/:id/replace', authMiddleware, upload.single('file'), (req: Request, res: Response) =>
+    photoController.replacePhoto(req, res)
+  );
+
   // Serve uploaded files
   router.get('/files/:filename', (req: Request, res: Response) =>
     photoController.serveFile(req, res)

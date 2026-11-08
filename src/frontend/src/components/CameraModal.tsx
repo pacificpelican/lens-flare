@@ -20,18 +20,53 @@ export const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCap
     const initCamera = async () => {
       try {
         setError(null);
-        const constraints = {
-          video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
-          audio: false,
-        };
+        
+        // Try with ideal constraints first (for mobile), fallback to simpler constraints
+        let stream: MediaStream | undefined;
+        
+        try {
+          // Primary: Try to get ideal resolution camera (works for mobile rear camera)
+          const constraints = {
+            video: { 
+              facingMode: { ideal: 'environment' },
+              width: { ideal: 1920 }, 
+              height: { ideal: 1080} 
+            },
+            audio: false,
+          };
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+        } catch (primaryError) {
+          // Fallback: Try front-facing camera with basic constraints (works for laptop webcam)
+          const fallbackConstraints = {
+            video: { 
+              facingMode: 'user',
+              width: { max: 1920 },
+              height: { max: 1080 }
+            },
+            audio: false,
+          };
+          stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+        }
 
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
         streamRef.current = stream;
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
+          
+          // Handle video element errors
+          videoRef.current.onerror = () => {
+            setError('Failed to display video stream. Please try again or check your camera.');
+            setIsCameraReady(false);
+          };
+
           videoRef.current.onloadedmetadata = () => {
-            setIsCameraReady(true);
+            // Make sure video has dimensions before marking as ready
+            if (videoRef.current && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
+              setIsCameraReady(true);
+            } else {
+              setError('Camera stream loaded but no valid video data received.');
+              setIsCameraReady(false);
+            }
           };
         }
       } catch (err) {
@@ -42,6 +77,8 @@ export const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCap
           setError('No camera device found. Please check your hardware.');
         } else if (error.name === 'NotSupportedError') {
           setError('Camera is not supported on this device or browser.');
+        } else if (error.name === 'OverconstrainedError') {
+          setError('Camera does not meet the required specifications. Please check your camera settings.');
         } else {
           setError(`Failed to access camera: ${error.message}`);
         }
@@ -118,6 +155,7 @@ export const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCap
                 ref={videoRef}
                 autoPlay
                 playsInline
+                muted
                 className="camera-preview"
                 style={{ display: isCameraReady ? 'block' : 'none' }}
               />

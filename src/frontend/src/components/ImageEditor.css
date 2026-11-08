@@ -31,6 +31,7 @@
   padding: 20px;
   border-bottom: 1px solid #e5e7eb;
   background: #f9fafb;
+  gap: 12px;
 }
 
 .editor-header h2 {
@@ -38,6 +39,37 @@
   font-size: 18px;
   font-weight: 600;
   color: #1f2937;
+  flex: 1;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.editor-history-btn {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  color: #374151;
+  min-width: 36px;
+}
+
+.editor-history-btn:hover:not(:disabled) {
+  border-color: #7c3aed;
+  color: #7c3aed;
+  background: #f3f0ff;
+}
+
+.editor-history-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #9ca3af;
 }
 
 .editor-close {
@@ -358,6 +390,54 @@
     padding: 8px 16px;
     font-size: 13px;
   }
+}
+
+/* Crop Mode Styles */
+.crop-mode {
+  cursor: crosshair;
+}
+
+.crop-section {
+  background: #fef3c7;
+  border: 2px solid #f59e0b;
+}
+
+.crop-section h4 {
+  color: #92400e;
+  margin-top: 0;
+}
+
+.aspect-ratio-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.aspect-btn {
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 0;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.aspect-btn:hover {
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
+.aspect-btn.active {
+  background: #f59e0b;
+  color: white;
+  border-color: #f59e0b;
+}
+
+.btn-full {
+  width: 100%;
 }
 
 @media (max-width: 480px) {

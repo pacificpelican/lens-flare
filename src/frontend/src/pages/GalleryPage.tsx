@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Photo, PaginatedResponse } from '@shared/types';
 import apiClient from '../services/api';
 import { PhotoGrid } from '../components/PhotoGrid';
+import { CameraModal } from '../components/CameraModal';
 import { Button } from '../components/Button';
 import './GalleryPage.css';
 
@@ -16,6 +17,7 @@ export const GalleryPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   useEffect(() => {
     loadPhotos();
@@ -70,6 +72,30 @@ export const GalleryPage: React.FC = () => {
     }
   };
 
+  const handleCameraCapture = async (blob: Blob) => {
+    const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+    
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('photo', file);
+      formData.append('title', `Photo ${new Date().toLocaleString()}`);
+
+      await apiClient.post('/api/photos/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      // Refresh photos
+      setPage(1);
+      await loadPhotos();
+    } catch (error) {
+      console.error('Camera upload failed:', error);
+      alert('Failed to save camera photo');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handlePhotoClick = (photoId: string) => {
     navigate(`/photo/${photoId}`);
   };
@@ -90,6 +116,13 @@ export const GalleryPage: React.FC = () => {
         <div className="gallery-header-content">
           <h1 className="gallery-title">Lens Flare</h1>
           <div className="gallery-header-right">
+            <button 
+              className="gallery-camera-btn"
+              onClick={() => setIsCameraOpen(true)}
+              title="Take a photo with camera"
+            >
+              📷
+            </button>
             <div className="gallery-user-info">
               {user && <span className="gallery-user-email">{user.email}</span>}
             </div>
@@ -145,6 +178,13 @@ export const GalleryPage: React.FC = () => {
           </Button>
         </div>
       )}
+
+      {/* Camera Modal */}
+      <CameraModal 
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onCapture={handleCameraCapture}
+      />
     </div>
   );
 };

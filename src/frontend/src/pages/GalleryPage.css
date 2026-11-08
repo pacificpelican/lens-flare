@@ -34,6 +34,26 @@
   gap: 2rem;
 }
 
+.gallery-camera-btn {
+  background: none;
+  border: none;
+  font-size: 1.75rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gallery-camera-btn:hover {
+  transform: scale(1.15);
+}
+
+.gallery-camera-btn:active {
+  transform: scale(0.95);
+}
+
 .gallery-user-info {
   display: flex;
   flex-direction: column;

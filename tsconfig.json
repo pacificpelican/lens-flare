@@ -11,11 +11,13 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "moduleResolution": "bundler",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "composite": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
     "noEmit": true,
+    "jsx": "react-jsx",
+    "types": ["node", "vite/client"],
+    "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {
       "@shared/*": ["src/shared/*"],
@@ -24,9 +26,5 @@
     }
   },
   "include": ["src"],
-  "references": [
-    { "path": "./tsconfig.backend.json" },
-    { "path": "./src/frontend/tsconfig.json" }
-  ],
   "exclude": ["node_modules"]
 }

@@ -7,6 +7,7 @@ export function createAuthRoutes(authController: AuthController, authMiddleware:
 
   router.post('/register', (req: Request, res: Response) => authController.register(req, res));
   router.post('/login', (req: Request, res: Response) => authController.login(req, res));
+  router.post('/refresh', (req: Request, res: Response) => authController.refresh(req, res));
   router.post('/logout', authMiddleware, (req: Request, res: Response) => authController.logout(req, res));
   router.get('/me', authMiddleware, (req: Request, res: Response) => authController.getMe(req, res));
 

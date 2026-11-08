@@ -180,4 +180,50 @@ export class AuthController {
       res.status(500).json({ success: false, error: 'Failed to fetch user' });
     }
   }
+
+  async refresh(req: Request, res: Response): Promise<void> {
+    try {
+      const refreshToken = req.cookies.refresh_token;
+
+      if (!refreshToken) {
+        res.status(401).json({ success: false, error: 'Refresh token not found' });
+        return;
+      }
+
+      // Try to get user from JWT claim if available
+      const authHeader = req.headers.authorization;
+      let userId: string | null = null;
+
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.slice(7);
+        try {
+          const payload = await this.authService.verifyAccessToken(token);
+          if (payload) {
+            userId = payload.user_id;
+          }
+        } catch {
+          // Token is expired, that's ok
+        }
+      }
+
+      // Fallback: extract user_id from the refresh token if available
+      // For now, we'll require the access token to be present
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Cannot determine user from token' });
+        return;
+      }
+
+      const newAccessToken = await this.authService.refreshAccessToken(refreshToken, userId);
+
+      if (!newAccessToken) {
+        res.status(401).json({ success: false, error: 'Invalid or expired refresh token' });
+        return;
+      }
+
+      res.status(200).json({ success: true, data: { access_token: newAccessToken } });
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      res.status(500).json({ success: false, error: 'Token refresh failed' });
+    }
+  }
 }

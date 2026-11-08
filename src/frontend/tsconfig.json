@@ -11,12 +11,9 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "moduleResolution": "bundler",
-    "noEmit": true,
     "jsx": "react-jsx",
-    "composite": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
+    "declaration": false,
+    "sourceMap": false,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
@@ -25,6 +22,6 @@
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules"]
 }
 

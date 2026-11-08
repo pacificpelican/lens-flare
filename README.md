@@ -1,6 +1,6 @@
 # Lens Flare - Photo Archiver
 
-![Lens Flare Logo](src/frontend/public/images/lens-flare-logo.png)
+<img src="src/frontend/public/images/lens-flare-logo-small.png" alt="Lens Flare Logo" width="80" height="80" />
 
 A desktop-first web app for archiving, organizing, and editing digital photos with AI-powered descriptions.
 
@@ -175,9 +175,10 @@ npm run dev:frontend
 
 ### Building for Production
 
+Outputs to `dist/backend/` and `src/frontend/dist/`
+
 ```bash
 npm run build
-# Outputs: dist/backend/ and src/frontend/dist/
 ```
 
 ## Configuration

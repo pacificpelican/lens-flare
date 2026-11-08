@@ -57,7 +57,7 @@ export function createPhotoRoutes(
   });
 
   // Photo routes
-  router.post('/upload', authMiddleware, upload.single('photo'), (req: Request, res: Response) =>
+  router.post('/upload', authMiddleware, upload.array('photo', 50), (req: Request, res: Response) =>
     photoController.upload(req, res)
   );
 

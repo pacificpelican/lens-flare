@@ -18,7 +18,7 @@ export const GalleryPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -84,29 +84,32 @@ export const GalleryPage: React.FC = () => {
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setUploadFile(e.target.files[0]);
+    if (e.target.files) {
+      setUploadFiles(Array.from(e.target.files));
     }
   };
 
   const handleUpload = async () => {
-    if (!uploadFile) {
-      alert('Please select a file');
+    if (uploadFiles.length === 0) {
+      alert('Please select at least one file');
       return;
     }
 
     try {
       setUploading(true);
       const formData = new FormData();
-      formData.append('photo', uploadFile);
-      formData.append('title', uploadFile.name.replace(/\.[^/.]+$/, ''));
+      
+      // Add all files
+      uploadFiles.forEach((file) => {
+        formData.append('photo', file);
+      });
 
       const response = await apiClient.post('/api/photos/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       // Refresh photos
-      setUploadFile(null);
+      setUploadFiles([]);
       setPage(1);
       await loadPhotos();
     } catch (error) {
@@ -196,13 +199,16 @@ export const GalleryPage: React.FC = () => {
             id="photo-input"
             onChange={handleFileSelect}
             accept="image/*"
+            multiple
             className="gallery-input-hidden"
             disabled={uploading}
           />
           <label htmlFor="photo-input" className="gallery-upload-label">
-            {uploadFile ? uploadFile.name : 'Choose photo...'}
+            {uploadFiles.length > 0 
+              ? `${uploadFiles.length} photo${uploadFiles.length === 1 ? '' : 's'} selected`
+              : 'Choose photo...'}
           </label>
-          <Button onClick={handleUpload} isLoading={uploading} disabled={!uploadFile}>
+          <Button onClick={handleUpload} isLoading={uploading} disabled={uploadFiles.length === 0}>
             Upload
           </Button>
         </div>

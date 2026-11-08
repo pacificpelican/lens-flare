@@ -21,53 +21,85 @@ export class PhotoController {
         return;
       }
 
-      if (!req.file) {
-        res.status(400).json({ success: false, error: 'No file uploaded' });
+      if (!req.files || (Array.isArray(req.files) && req.files.length === 0)) {
+        res.status(400).json({ success: false, error: 'No files uploaded' });
         return;
       }
 
-      const { title } = req.body;
-      const filename = req.file.filename; // multer generates this
-      const originalFilename = req.file.originalname;
-      const mimeType = req.file.mimetype;
-      const fileSize = req.file.size;
+      // Handle both single file (legacy) and multiple files
+      const files = Array.isArray(req.files) ? req.files : [req.files];
+      
+      // Get titles from request body (can be array or single value)
+      const titlesInput = req.body.title;
+      const titles = Array.isArray(titlesInput) ? titlesInput : [titlesInput];
 
-      // Extract EXIF data
-      let exifData: Record<string, unknown> | undefined;
-      try {
-        const filePath = path.join(this.uploadDir, filename);
-        const exifRaw = await this.exifService.extractExif(filePath);
-        if (exifRaw) {
-          exifData = this.exifService.formatExifForDisplay(exifRaw) as Record<string, unknown>;
+      const results = [];
+      const errors = [];
+
+      for (let i = 0; i < files.length; i++) {
+        try {
+          const file = files[i];
+          const requestTitle = typeof req.body.title === 'string' ? req.body.title : undefined;
+          const filename = (file as Express.Multer.File).filename; // multer generates this
+          const originalFilename = (file as Express.Multer.File).originalname;
+          const mimeType = (file as Express.Multer.File).mimetype;
+          const fileSize = (file as Express.Multer.File).size;
+
+          // Extract EXIF data
+          let exifData: Record<string, unknown> | undefined;
+          try {
+            const filePath = path.join(this.uploadDir, filename);
+            const exifRaw = await this.exifService.extractExif(filePath);
+            if (exifRaw) {
+              exifData = this.exifService.formatExifForDisplay(exifRaw) as Record<string, unknown>;
+            }
+          } catch (error) {
+            // EXIF extraction failed - continue without it
+            console.warn('EXIF extraction warning:', error instanceof Error ? error.message : 'unknown error');
+          }
+
+          // Generate AI description (async, don't wait)
+          let aiDescription: string | undefined;
+          try {
+            const filePath = path.join(this.uploadDir, filename);
+            const imageBuffer = await fs.readFile(filePath);
+            aiDescription = (await this.aiDescriptionService.generateDescription(imageBuffer, filename)) || undefined;
+          } catch (error) {
+            // AI description generation failed - continue without it
+            console.warn('AI description warning:', error instanceof Error ? error.message : 'unknown error');
+          }
+
+          const photo = await this.photoService.createPhoto({
+            userId: req.user.user_id,
+            filename,
+            originalFilename,
+            title: requestTitle || originalFilename.replace(/\.[^/.]+$/, ''),
+            mimeType,
+            fileSize,
+            exifData,
+            aiDescription,
+          });
+
+          results.push({ success: true, data: photo });
+        } catch (error) {
+          errors.push({
+            success: false,
+            filename: files[i].originalname,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
         }
-      } catch (error) {
-        // EXIF extraction failed - continue without it
-        console.warn('EXIF extraction warning:', error instanceof Error ? error.message : 'unknown error');
       }
 
-      // Generate AI description (async, don't wait)
-      let aiDescription: string | undefined;
-      try {
-        const filePath = path.join(this.uploadDir, filename);
-        const imageBuffer = await fs.readFile(filePath);
-        aiDescription = (await this.aiDescriptionService.generateDescription(imageBuffer, filename)) || undefined;
-      } catch (error) {
-        // AI description generation failed - continue without it
-        console.warn('AI description warning:', error instanceof Error ? error.message : 'unknown error');
+      // Return success if at least one file was uploaded
+      if (results.length > 0) {
+        res.status(201).json({
+          success: true,
+          data: results.length === 1 ? results[0].data : results.map((r) => r.data),
+          errors: errors.length > 0 ? errors : undefined,
+        });
+      } else {
+        res.status(400).json({ success: false, error: 'All uploads failed', errors });
       }
-
-      const photo = await this.photoService.createPhoto({
-        userId: req.user.user_id,
-        filename,
-        originalFilename,
-        title: title || originalFilename.replace(/\.[^/.]+$/, ''),
-        mimeType,
-        fileSize,
-        exifData,
-        aiDescription,
-      });
-
-      res.status(201).json({ success: true, data: photo });
     } catch (error) {
       console.error('Upload error:', error);
       res.status(500).json({ success: false, error: 'Upload failed' });

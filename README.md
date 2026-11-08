@@ -1,10 +1,12 @@
 # Lens Flare - Photo Archiver
 
+![Lens Flare Logo](src/frontend/public/images/lens-flare-logo.png)
+
 A desktop-first web app for archiving, organizing, and editing digital photos with AI-powered descriptions.
 
 ## Project Status
 
-🚧 **In Development** — Architecture & foundation layer complete, moving to frontend UI and core photo features.
+🚧 **In Development** — Core features complete, polishing UI and browser compatibility.
 
 ## Architecture Overview
 
@@ -255,23 +257,31 @@ OPENAI_MODEL=gpt-4-vision
 - [x] Authentication (JWT + refresh tokens)
 - [x] User registration & login
 - [x] Environment-based configuration
+- [x] Photo upload & storage
+- [x] Contact sheet grid UI with search & filtering
+- [x] Photo detail page with EXIF data display
+- [x] Photo tagging system
+- [x] AI description generation (Ollama integration)
+- [x] Image processing (resize, format conversion, AVIF export)
+- [x] Photo deletion with confirmation
+- [x] Image editor (crop, undo/redo, color adjustments)
+- [x] Webcam integration (authenticated users)
+- [x] User settings & preferences (terms, privacy, debug info)
+- [x] Marketing landing page
+- [x] Unauthenticated camera access
+- [x] Web Share API support (mobile download/share)
 
 ### 🚧 In Progress
-- [ ] Photo upload & storage
-- [ ] Contact sheet grid UI
-- [ ] Photo detail page
-- [ ] EXIF data extraction & display
-- [ ] Photo tagging system
-- [ ] AI description generation
+- [ ] Browser compatibility (camera rendering on Edge/Firefox)
+- [ ] Settings: account deletion
+- [ ] Advanced filtering & sorting options
 
 ### 📋 Planned
-- [ ] Image processing (resize, format conversion)
-- [ ] Photo search & filtering
-- [ ] Bulk export options
-- [ ] Webcam integration
-- [ ] User settings & preferences
-- [ ] Photo deletion with confirmation
-- [ ] Marketing landing page
+- [ ] Batch export options
+- [ ] Photo organization by date/album
+- [ ] Advanced AI features (auto-tagging, smart organization)
+- [ ] Offline sync support
+- [ ] Mobile app (Electron/React Native)
 
 ## Development Notes
 
@@ -311,7 +321,7 @@ The backend can be packaged with Electron for a desktop app using the Node proce
 
 ## License
 
-MIT
+ISC
 
 ---
 

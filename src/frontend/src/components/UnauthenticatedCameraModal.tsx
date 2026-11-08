@@ -86,20 +86,40 @@ export const UnauthenticatedCameraModal: React.FC<UnauthenticatedCameraModalProp
   }, [isOpen]);
 
   const handleLoadedMetadata = () => {
+    console.log('handleLoadedMetadata called');
     if (videoRef.current) {
+      console.log('Video element state:', {
+        paused: videoRef.current.paused,
+        videoWidth: videoRef.current.videoWidth,
+        videoHeight: videoRef.current.videoHeight,
+        readyState: videoRef.current.readyState,
+      });
+      
       // Attempt to play the video
       const playPromise = videoRef.current.play();
       if (playPromise !== undefined) {
-        playPromise.catch((err) => {
-          console.error('Video play error:', err);
-          setError('Unable to play camera stream. Check browser permissions.');
-        });
+        playPromise
+          .then(() => {
+            console.log('Video play succeeded');
+          })
+          .catch((err) => {
+            console.error('Video play error:', err);
+            setError('Unable to play camera stream. Check browser permissions.');
+          });
       }
+    } else {
+      console.error('handleLoadedMetadata: videoRef.current is null');
     }
 
     // Add timeout to detect if video stream doesn't start playing
     playTimeoutRef.current = setTimeout(() => {
+      console.log('Play timeout check...');
       if (videoRef.current) {
+        console.log('Video at timeout:', {
+          paused: videoRef.current.paused,
+          videoWidth: videoRef.current.videoWidth,
+          videoHeight: videoRef.current.videoHeight,
+        });
         // Check if video has content
         if (videoRef.current.paused || videoRef.current.videoWidth === 0) {
           console.error('Video not playing or has no width. paused:', videoRef.current.paused, 'width:', videoRef.current.videoWidth);
@@ -108,6 +128,8 @@ export const UnauthenticatedCameraModal: React.FC<UnauthenticatedCameraModalProp
           if (streamRef.current) {
             streamRef.current.getTracks().forEach((track) => track.stop());
           }
+        } else {
+          console.log('Video is playing successfully!');
         }
       }
     }, 2000);
@@ -253,6 +275,8 @@ export const UnauthenticatedCameraModal: React.FC<UnauthenticatedCameraModalProp
               <video
                 ref={videoRef}
                 onLoadedMetadata={handleLoadedMetadata}
+                onPlay={() => console.log('Video onPlay event fired')}
+                onPlaying={() => console.log('Video onPlaying event fired')}
                 autoPlay
                 playsInline
                 muted

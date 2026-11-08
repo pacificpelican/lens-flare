@@ -17,6 +17,8 @@ export const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCap
   useEffect(() => {
     if (!isOpen) return;
 
+    let playTimeout: NodeJS.Timeout | null = null;
+
     const initCamera = async () => {
       try {
         setError(null);
@@ -63,6 +65,14 @@ export const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCap
             // Make sure video has dimensions before marking as ready
             if (videoRef.current && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
               setIsCameraReady(true);
+              
+              // Add a timeout to detect if video never actually plays
+              playTimeout = setTimeout(() => {
+                if (videoRef.current && !videoRef.current.playing) {
+                  setError('Camera stream initialized but video is not playing. Check your browser permissions.');
+                  setIsCameraReady(false);
+                }
+              }, 2000);
             } else {
               setError('Camera stream loaded but no valid video data received.');
               setIsCameraReady(false);
@@ -89,6 +99,9 @@ export const CameraModal: React.FC<CameraModalProps> = ({ isOpen, onClose, onCap
     initCamera();
 
     return () => {
+      if (playTimeout) {
+        clearTimeout(playTimeout);
+      }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;

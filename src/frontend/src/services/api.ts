@@ -27,7 +27,7 @@ export class ApiClient {
     // Request interceptor: add access token to headers
     this.client.interceptors.request.use((config) => {
       const token = localStorage.getItem('access_token');
-      if (token) {
+      if (token && token.length > 0) {
         config.headers.Authorization = `Bearer ${token}`;
       }
       return config;

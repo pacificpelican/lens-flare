@@ -14,8 +14,8 @@ export function createPhotoRoutes(
   // Configure multer for file upload
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-      // User uploads directory: uploads/{userId}/
-      const uploadDir = path.join(process.cwd(), 'uploads', (req as any).user?.user_id || 'temp');
+      // Upload to common directory - separation by user happens at DB level
+      const uploadDir = path.join(process.cwd(), 'uploads');
       cb(null, uploadDir);
     },
     filename: (req, file, cb) => {

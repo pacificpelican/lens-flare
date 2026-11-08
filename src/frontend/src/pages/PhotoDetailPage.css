@@ -1,7 +1,7 @@
 .photo-detail-page {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  flex: 1;
   background-color: var(--color-bg);
 }
 

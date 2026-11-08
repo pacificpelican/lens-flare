@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import './ImageEditor.css';
 
 interface ImageEditorProps {
@@ -68,12 +68,11 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onClose, onS
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       setImage(img);
-      setIsLoading(false);
       const initialState: EditState = { ...currentState };
-      drawImage(img, initialState);
-      // Initialize history with original state
+      // Set state first, then draw after state is updated
       setHistory([{ state: initialState, timestamp: Date.now() }]);
       setHistoryIndex(0);
+      setIsLoading(false);
     };
     img.onerror = () => {
       setIsLoading(false);
@@ -81,6 +80,14 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onClose, onS
     };
     img.src = imageUrl;
   }, [imageUrl]);
+
+  // Draw image whenever image or current state changes
+  useEffect(() => {
+    if (image && canvasRef.current) {
+      drawImage(image, currentState);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [image, currentState]);
 
   // Keyboard shortcuts
   useEffect(() => {

@@ -5,6 +5,7 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { GalleryPage } from './pages/GalleryPage';
 import { PhotoDetailPage } from './pages/PhotoDetailPage';
+import { Footer } from './components/Footer';
 import './App.css';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -57,7 +58,10 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        <div className="app-container">
+          <AppRoutes />
+          <Footer />
+        </div>
       </AuthProvider>
     </BrowserRouter>
   );

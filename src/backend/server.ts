@@ -1,13 +1,17 @@
 import express, { Express } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import { getConfig } from './config';
-import { createDatabase } from './db/database';
-import { initializeSchema } from './db/schema';
-import { AuthService } from './services/auth.service';
-import { AuthController } from './controllers/auth.controller';
-import { createAuthRoutes } from './routes/auth.routes';
-import { createAuthMiddleware } from './middleware/auth';
+import { getConfig } from './config.js';
+import { createDatabase } from './db/database.js';
+import { initializeSchema } from './db/schema.js';
+import { AuthService } from './services/auth.service.js';
+import { PhotoService } from './services/photo.service.js';
+import { AuthController } from './controllers/auth.controller.js';
+import { PhotoController } from './controllers/photo.controller.js';
+import { createAuthRoutes } from './routes/auth.routes.js';
+import { createPhotoRoutes } from './routes/photo.routes.js';
+import { createAuthMiddleware } from './middleware/auth.js';
+import path from 'path';
 
 async function bootstrap() {
   const config = getConfig();
@@ -24,9 +28,12 @@ async function bootstrap() {
 
   // Create services
   const authService = new AuthService(db, config.jwtSecret, config.refreshTokenSecret);
+  const photoService = new PhotoService(db);
 
   // Create controllers
   const authController = new AuthController(db, authService);
+  const uploadDir = path.join(process.cwd(), 'uploads');
+  const photoController = new PhotoController(photoService, uploadDir);
 
   // Create middleware
   const authMiddleware = createAuthMiddleware(authService);
@@ -43,8 +50,12 @@ async function bootstrap() {
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
 
+  // Serve uploaded files as static
+  app.use('/uploads', express.static(uploadDir));
+
   // Routes
   app.use('/api/auth', createAuthRoutes(authController, authMiddleware));
+  app.use('/api/photos', createPhotoRoutes(photoController, authMiddleware));
 
   // Health check
   app.get('/api/health', (req, res) => {
@@ -61,6 +72,7 @@ async function bootstrap() {
   app.listen(config.port, config.host, () => {
     console.log(`✓ Server listening on http://${config.host}:${config.port}`);
     console.log(`📝 API available at http://${config.host}:${config.port}/api`);
+    console.log(`📸 Upload directory: ${uploadDir}`);
   });
 
   // Graceful shutdown
@@ -75,3 +87,4 @@ bootstrap().catch((error) => {
   console.error('Fatal error:', error);
   process.exit(1);
 });
+

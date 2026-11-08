@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import crypto from 'crypto';
-import { AuthService } from '../services/auth.service';
-import { IDatabase } from '../db/database';
+import { AuthService } from '../services/auth.service.js';
+import { IDatabase } from '../db/database.js';
 import { RegisterRequest, LoginRequest, AuthResponse, UserProfile } from '@shared/types';
 
 export class AuthController {

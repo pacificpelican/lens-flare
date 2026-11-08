@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { IDatabase } from '../db/database';
+import { IDatabase } from '../db/database.js';
 import { JwtPayload, AuthTokens } from '@shared/types';
 
 const ACCESS_TOKEN_EXPIRY = '15m';

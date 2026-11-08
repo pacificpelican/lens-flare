@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { AuthController } from '../controllers/auth.controller';
-import { createAuthMiddleware } from '../middleware/auth';
+import { AuthController } from '../controllers/auth.controller.js';
+import { createAuthMiddleware } from '../middleware/auth.js';
 
 export function createAuthRoutes(authController: AuthController, authMiddleware: ReturnType<typeof createAuthMiddleware>): Router {
   const router = Router();

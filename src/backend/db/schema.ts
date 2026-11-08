@@ -1,4 +1,4 @@
-import { IDatabase } from './database';
+import { IDatabase } from './database.js';
 
 export async function initializeSchema(db: IDatabase): Promise<void> {
   // Users table

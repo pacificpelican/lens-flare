@@ -11,6 +11,7 @@ declare module 'exif-parser' {
 
   export default class ExifParser {
     static create(buffer: Buffer): ExifParser;
+    enableSimpleValues(enable: boolean): ExifParser;
     parse(): ParseResult;
   }
 }

@@ -33,7 +33,7 @@ export const PhotoDetailPage: React.FC = () => {
     if (!photoId) return;
     try {
       setIsLoading(true);
-      const response = await apiClient.get<PhotoDetail>(`/api/photos/${photoId}`);
+      const response = await apiClient.get<{ success: boolean; data: PhotoDetail }>(`/api/photos/${photoId}`);
       setPhoto(response.data);
       setTitle(response.data.title);
       setUserDescription(response.data.user_description || '');
@@ -256,11 +256,11 @@ export const PhotoDetailPage: React.FC = () => {
           </div>
 
           {/* EXIF Data */}
-          {photo.exif_data && (
             <div className="photo-detail-section">
               <button 
                 className="photo-detail-label photo-detail-collapsible"
                 onClick={() => setIsExifExpanded(!isExifExpanded)}
+                aria-expanded={isExifExpanded}
               >
                 <span className="photo-detail-collapse-arrow">
                   {isExifExpanded ? '▼' : '▶'}
@@ -269,16 +269,17 @@ export const PhotoDetailPage: React.FC = () => {
               </button>
               {isExifExpanded && (
                 <div className="photo-detail-exif">
-                  {Object.entries(photo.exif_data).map(([key, value]) => (
-                    <div key={key} className="photo-detail-exif-row">
-                      <span className="photo-detail-exif-key">{key}:</span>
-                      <span className="photo-detail-exif-value">{String(value)}</span>
-                    </div>
-                  ))}
+                  {photo.exif_data && Object.keys(photo.exif_data).length > 0 ? (
+                    Object.entries(photo.exif_data).map(([key, value]) => (
+                      <div key={key} className="photo-detail-exif-row">
+                        <span className="photo-detail-exif-key">{key}:</span>
+                        <span className="photo-detail-exif-value">{typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value)}</span>
+                      </div>
+                    ))
+                  ) : <p>No photo information available.</p>}
                 </div>
               )}
             </div>
-          )}
 
           {/* Tags */}
           <div className="photo-detail-section">

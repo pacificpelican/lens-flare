@@ -5,6 +5,8 @@ export interface ExifData {
   make?: string;
   model?: string;
   dateTime?: string;
+  dateDigitized?: string;
+  dateModified?: string;
   orientation?: number;
   xResolution?: number;
   yResolution?: number;
@@ -44,10 +46,13 @@ export class ExifService {
       }
 
       const tags = result.tags;
+      const rawTags = ExifParser.create(buffer).enableSimpleValues(false).parse().tags;
       return {
         make: tags.Make ? String(tags.Make) : undefined,
         model: tags.Model ? String(tags.Model) : undefined,
-        dateTime: tags.DateTime ? String(tags.DateTime) : undefined,
+        dateTime: typeof rawTags.DateTimeOriginal === 'string' ? rawTags.DateTimeOriginal : undefined,
+        dateDigitized: typeof rawTags.CreateDate === 'string' ? rawTags.CreateDate : undefined,
+        dateModified: typeof rawTags.ModifyDate === 'string' ? rawTags.ModifyDate : undefined,
         orientation: tags.Orientation ? Number(tags.Orientation) : undefined,
         xResolution: tags.XResolution ? Number(tags.XResolution) : undefined,
         yResolution: tags.YResolution ? Number(tags.YResolution) : undefined,
@@ -84,7 +89,13 @@ export class ExifService {
     if (exif.model) formatted['Camera Model'] = exif.model;
     if (exif.lensModel) formatted['Lens'] = exif.lensModel;
 
-    if (exif.dateTime) formatted['Date Taken'] = exif.dateTime;
+    const formatDate = (value: string) => {
+      const match = /^(\d{4}):(\d{2}):(\d{2}) (\d{2}:\d{2}:\d{2})$/.exec(value);
+      return match ? `${match[1]}-${match[2]}-${match[3]} ${match[4]} (camera time; timezone not shown)` : value;
+    };
+    if (exif.dateTime) formatted['Date Taken'] = formatDate(exif.dateTime);
+    if (exif.dateDigitized) formatted['Date Digitized'] = formatDate(exif.dateDigitized);
+    if (exif.dateModified) formatted['Date Modified'] = formatDate(exif.dateModified);
 
     if (exif.exposureTime) {
       // Format shutter speed (e.g., 1/200)

@@ -27,6 +27,16 @@ export class PhotoController {
     private uploadDir: string
   ) {}
 
+  private async getPhotoWithExif(photoId: string, userId: string): Promise<PhotoDetail> {
+    const photo = await this.photoService.getPhotoDetail(photoId, userId);
+    if (path.basename(photo.filename) !== photo.filename) return photo;
+    const exif = await this.exifService.extractExif(path.join(this.uploadDir, photo.filename));
+    if (exif) {
+      photo.exif_data = { ...photo.exif_data, ...this.exifService.formatExifForDisplay(exif) };
+    }
+    return photo;
+  }
+
   async upload(req: Request, res: Response): Promise<void> {
     try {
       if (!req.user) {
@@ -174,7 +184,7 @@ export class PhotoController {
       let totalPages: number;
       do {
         const result = await this.photoService.listPhotos(userId, page, 50, 'upload_date', 'desc', getFilters(req));
-        for (const photo of result.photos) photos.push(await this.photoService.getPhotoDetail(photo.id, userId));
+        for (const photo of result.photos) photos.push(await this.getPhotoWithExif(photo.id, userId));
         totalPages = result.totalPages;
         page++;
       } while (page <= totalPages);
@@ -215,7 +225,7 @@ export class PhotoController {
 
       const { id } = req.params;
 
-      const photo = await this.photoService.getPhotoDetail(id, req.user.user_id);
+      const photo = await this.getPhotoWithExif(id, req.user.user_id);
 
       res.status(200).json({ success: true, data: photo });
     } catch (error) {

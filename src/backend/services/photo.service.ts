@@ -2,6 +2,25 @@ import { IDatabase } from '../db/database.js';
 import { Photo, PhotoDetail, Tag } from '@shared/types';
 import crypto from 'crypto';
 
+type StoredPhoto = Omit<Photo, 'exif_data'> & { exif_data: Photo['exif_data'] | string };
+
+function normalizePhoto(photo: StoredPhoto): Photo {
+  let exif: unknown = photo.exif_data;
+  if (typeof exif === 'string') {
+    try {
+      exif = JSON.parse(exif);
+    } catch {
+      exif = null;
+    }
+  }
+  return {
+    ...photo,
+    exif_data: exif && typeof exif === 'object' && !Array.isArray(exif)
+      ? exif as Record<string, unknown>
+      : null,
+  };
+}
+
 export class PhotoService {
   constructor(private db: IDatabase) {}
 
@@ -50,7 +69,7 @@ export class PhotoService {
   }
 
   async getPhoto(photoId: string, userId: string): Promise<Photo> {
-    const photos = await this.db.query<Photo>(
+    const photos = await this.db.query<StoredPhoto>(
       `SELECT id, user_id, filename, original_filename, title, user_description, ai_description, 
               exif_data, file_size, mime_type, upload_date, created_at, updated_at
        FROM photos WHERE id = ? AND user_id = ?`,
@@ -61,7 +80,7 @@ export class PhotoService {
       throw new Error('Photo not found');
     }
 
-    return photos[0];
+    return normalizePhoto(photos[0]);
   }
 
   async getPhotoDetail(photoId: string, userId: string): Promise<PhotoDetail> {
@@ -175,10 +194,10 @@ export class PhotoService {
     query += ` ORDER BY p.upload_date ${sortOrder.toUpperCase()}, p.id ${sortOrder.toUpperCase()} LIMIT ? OFFSET ?`;
     params.push(perPage, offset);
 
-    const photos = await this.db.query<Photo>(query, params);
+    const photos = await this.db.query<StoredPhoto>(query, params);
 
     return {
-      photos,
+      photos: photos.map(normalizePhoto),
       total,
       totalPages: Math.ceil(total / perPage),
     };

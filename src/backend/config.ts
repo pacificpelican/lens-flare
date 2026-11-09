@@ -63,7 +63,7 @@ function getAiConfig(): AiConfig {
 
   if (provider === 'ollama') {
     config.endpoint = process.env.OLLAMA_ENDPOINT || 'http://localhost:11434';
-    config.model = process.env.OLLAMA_MODEL || 'llava-phi';
+    config.model = process.env.OLLAMA_MODEL || 'llava:latest';
   } else if (provider === 'openai') {
     config.apiKey = process.env.OPENAI_API_KEY;
     config.model = process.env.OPENAI_MODEL || 'gpt-4-vision';

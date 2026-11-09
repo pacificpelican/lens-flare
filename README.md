@@ -142,15 +142,13 @@ lens-flare/
    npm install
    ```
 
-2. **Configure environment:**
+2. **Configure environment:** Copy the template, then edit `.env` with your settings.
    ```bash
    cp .env.example .env
-   # Edit .env with your settings (defaults work for local dev)
    ```
 
-3. **Generate JWT secrets:**
+3. **Generate JWT secrets:** Run this command twice and put the two different values in `.env` as `JWT_SECRET` and `REFRESH_TOKEN_SECRET`.
    ```bash
-   # Generate two random hex strings for JWT_SECRET and REFRESH_TOKEN_SECRET
    openssl rand -hex 32
    ```
 
@@ -165,11 +163,17 @@ lens-flare/
 
 ### Individual Development
 
-```bash
-# Backend only (with watch)
-npm run dev:backend
+Run the backend on its own:
 
-# Frontend only (with hot reload)
+```bash
+npm run dev:backend
+```
+
+This builds the backend and starts it; restart the command after backend changes.
+
+Run the frontend with hot reload:
+
+```bash
 npm run dev:frontend
 ```
 
@@ -218,13 +222,40 @@ MYSQL_DATABASE=lens_flare
 
 ### AI Configuration
 
-**Ollama (local, recommended):**
-```env
-AI_ENABLED=true
-AI_PROVIDER=ollama
-OLLAMA_ENDPOINT=http://localhost:11434
-OLLAMA_MODEL=llava:latest
-```
+#### Setting Up Ollama
+
+Ollama runs a vision model locally to generate photo descriptions. It is optional: uploads still work without it.
+
+1. Download and install Ollama from [ollama.com](https://ollama.com/download). On macOS, open the Ollama app to start its server. On Linux, start the server if it is not already running:
+
+   ```bash
+   ollama serve
+   ```
+
+2. Download the vision model used by `.env.example`:
+
+   ```bash
+   ollama pull llava:latest
+   ```
+
+   Model downloads can be large and require sufficient disk space and memory. You can use another Ollama vision model by pulling it and setting `OLLAMA_MODEL` to its name.
+
+3. Check that the server is responding and the model is listed:
+
+   ```bash
+   ollama list
+   ```
+
+4. Configure the following values in `.env`, then start or restart the backend:
+
+   ```env
+   AI_ENABLED=true
+   AI_PROVIDER=ollama
+   OLLAMA_ENDPOINT=http://localhost:11434
+   OLLAMA_MODEL=llava:latest
+   ```
+
+The endpoint defaults to `http://localhost:11434`, and the model defaults to `llava:latest`. If Ollama is unavailable or generation fails, the upload continues without an AI description. Set `AI_ENABLED=false` to disable AI descriptions.
 
 **OpenAI (cloud):**
 ```env

@@ -23,6 +23,11 @@ export interface AiConfig {
   apiKey?: string;
 }
 
+export interface RegistrationConfig {
+  allowOpenSignups: boolean;
+  inviteCodes: string[];
+}
+
 export interface AppConfig {
   port: number;
   host: string;
@@ -31,6 +36,7 @@ export interface AppConfig {
   refreshTokenSecret: string;
   database: DatabaseConfig;
   ai: AiConfig;
+  registration: RegistrationConfig;
 }
 
 function getDatabaseConfig(): DatabaseConfig {
@@ -75,6 +81,20 @@ function getAiConfig(): AiConfig {
   return config;
 }
 
+function getRegistrationConfig(): RegistrationConfig {
+  const allowOpenSignups = process.env.ALLOW_OPEN_SIGNUPS !== 'false';
+  const inviteCodesStr = process.env.INVITE_CODES || '';
+  const inviteCodes = inviteCodesStr
+    .split(',')
+    .map((code) => code.trim())
+    .filter((code) => code.length > 0);
+
+  return {
+    allowOpenSignups,
+    inviteCodes,
+  };
+}
+
 export function getConfig(): AppConfig {
   const jwtSecret = process.env.JWT_SECRET;
   const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
@@ -91,5 +111,6 @@ export function getConfig(): AppConfig {
     refreshTokenSecret,
     database: getDatabaseConfig(),
     ai: getAiConfig(),
+    registration: getRegistrationConfig(),
   };
 }

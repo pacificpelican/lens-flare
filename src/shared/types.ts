@@ -82,6 +82,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   username?: string;
+  inviteCode?: string;
 }
 
 export interface LoginRequest {

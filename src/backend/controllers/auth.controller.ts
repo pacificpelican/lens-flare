@@ -5,6 +5,7 @@ import path from 'path';
 import { AuthService } from '../services/auth.service.js';
 import { IDatabase } from '../db/database.js';
 import { RegisterRequest, LoginRequest, AuthResponse, UserProfile } from '@shared/types';
+import { getConfig } from '../config.js';
 
 export class AuthController {
   constructor(
@@ -63,11 +64,21 @@ export class AuthController {
 
   async register(req: Request, res: Response): Promise<void> {
     try {
-      const { email, password, username } = req.body as RegisterRequest;
+      const { email, password, username, inviteCode } = req.body as RegisterRequest & { inviteCode?: string };
+      const config = getConfig();
 
       if (!email || !password) {
         res.status(400).json({ success: false, error: 'Email and password are required' });
         return;
+      }
+
+      // Check if signups are allowed
+      if (!config.registration.allowOpenSignups) {
+        // Signups closed - check invite code
+        if (!inviteCode || !config.registration.inviteCodes.includes(inviteCode.trim())) {
+          res.status(403).json({ success: false, error: 'Signups are currently closed. An invite code is required.' });
+          return;
+        }
       }
 
       // Check if user already exists
@@ -229,6 +240,22 @@ export class AuthController {
     } catch (error) {
       console.error('Get user error:', error);
       res.status(500).json({ success: false, error: 'Failed to fetch user' });
+    }
+  }
+
+  async getRegistrationConfig(req: Request, res: Response): Promise<void> {
+    try {
+      const config = getConfig();
+      res.status(200).json({
+        success: true,
+        data: {
+          allowOpenSignups: config.registration.allowOpenSignups,
+          requiresInviteCode: !config.registration.allowOpenSignups && config.registration.inviteCodes.length > 0,
+        },
+      });
+    } catch (error) {
+      console.error('Get registration config error:', error);
+      res.status(500).json({ success: false, error: 'Failed to fetch registration config' });
     }
   }
 

@@ -1,14 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button } from './Button';
 import { Input } from './Input';
+import apiClient from '../services/api';
 import './LoginModal.css';
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultMode?: 'login' | 'register';
+}
+
+interface RegistrationConfig {
+  allowOpenSignups: boolean;
+  requiresInviteCode: boolean;
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, defaultMode = 'login' }) => {
@@ -19,8 +25,30 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, default
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [regConfig, setRegConfig] = useState<RegistrationConfig>({ allowOpenSignups: true, requiresInviteCode: false });
+  const [configLoading, setConfigLoading] = useState(true);
+
+  useEffect(() => {
+    if (isOpen && mode === 'register') {
+      fetchRegistrationConfig();
+    }
+  }, [isOpen, mode]);
+
+  const fetchRegistrationConfig = async () => {
+    try {
+      setConfigLoading(true);
+      const response = await apiClient.get<{ data: RegistrationConfig }>('/api/auth/config');
+      setRegConfig(response.data);
+    } catch (err) {
+      console.error('Failed to fetch registration config:', err);
+      setRegConfig({ allowOpenSignups: true, requiresInviteCode: false });
+    } finally {
+      setConfigLoading(false);
+    }
+  };
 
   const handleClose = () => {
     resetForm();
@@ -32,6 +60,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, default
     setUsername('');
     setPassword('');
     setConfirmPassword('');
+    setInviteCode('');
     setRememberMe(false);
     setLocalError(null);
     clearError();
@@ -76,6 +105,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, default
       return;
     }
 
+    // Check invite code if required
+    if (!regConfig.allowOpenSignups && regConfig.requiresInviteCode && !inviteCode) {
+      setLocalError('Invite code is required');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setLocalError('Passwords do not match');
       return;
@@ -87,7 +122,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, default
     }
 
     try {
-      await register({ email, password, username: username || undefined });
+      await register({ email, password, username: username || undefined, inviteCode: inviteCode || undefined });
       resetForm();
       onClose();
       navigate('/gallery');
@@ -196,7 +231,19 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, default
               disabled={isLoading}
             />
 
-            <Button type="submit" size="md" isLoading={isLoading}>
+            {!regConfig.allowOpenSignups && regConfig.requiresInviteCode && (
+              <Input
+                type="text"
+                label="Invite Code"
+                placeholder="Enter invite code"
+                value={inviteCode}
+                onChange={(e) => setInviteCode(e.target.value)}
+                disabled={isLoading}
+                helperText="Required to create an account"
+              />
+            )}
+
+            <Button type="submit" size="md" isLoading={isLoading || configLoading}>
               Create Account
             </Button>
           </form>

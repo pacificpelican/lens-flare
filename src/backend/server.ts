@@ -13,6 +13,7 @@ import { PhotoController } from './controllers/photo.controller.js';
 import { createAuthRoutes } from './routes/auth.routes.js';
 import { createPhotoRoutes } from './routes/photo.routes.js';
 import { createAuthMiddleware } from './middleware/auth.js';
+import { AccountOperations } from './middleware/account-operations.js';
 import { mkdir } from 'fs/promises';
 import path from 'path';
 
@@ -43,13 +44,14 @@ async function bootstrap() {
   }
 
   // Create controllers
-  const authController = new AuthController(db, authService);
   const uploadDir = path.join(process.cwd(), 'uploads');
   await mkdir(uploadDir, { recursive: true });
+  const authController = new AuthController(db, authService, uploadDir);
   const photoController = new PhotoController(photoService, exifService, aiDescriptionService, uploadDir);
 
   // Create middleware
   const authMiddleware = createAuthMiddleware(authService);
+  const accountOperations = new AccountOperations(authService);
 
   // Initialize Express app
   const app: Express = express();
@@ -67,8 +69,8 @@ async function bootstrap() {
   app.use('/uploads', express.static(uploadDir));
 
   // Routes
-  app.use('/api/auth', createAuthRoutes(authController, authMiddleware));
-  app.use('/api/photos', createPhotoRoutes(photoController, authMiddleware));
+  app.use('/api/auth', createAuthRoutes(authController, authMiddleware, accountOperations));
+  app.use('/api/photos', createPhotoRoutes(photoController, authMiddleware, accountOperations));
 
   // Health check
   app.get('/api/health', (req, res) => {

@@ -10,6 +10,7 @@ interface AuthContextType {
   register: (data: RegisterRequest) => Promise<void>;
   login: (data: LoginRequest) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
   clearError: () => void;
 }
 
@@ -103,6 +104,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setError(null);
   };
 
+  const deleteAccount = async (password: string) => {
+    await apiClient.deleteAccount(password);
+    setUser(null);
+    setError(null);
+  };
+
   const value: AuthContextType = {
     user,
     isLoading,
@@ -111,6 +118,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     register,
     login,
     logout,
+    deleteAccount,
     clearError,
   };
 

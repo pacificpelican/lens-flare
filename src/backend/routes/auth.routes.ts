@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { AuthController } from '../controllers/auth.controller.js';
 import { createAuthMiddleware } from '../middleware/auth.js';
+import { AccountOperations } from '../middleware/account-operations.js';
 
-export function createAuthRoutes(authController: AuthController, authMiddleware: ReturnType<typeof createAuthMiddleware>): Router {
+export function createAuthRoutes(authController: AuthController, authMiddleware: ReturnType<typeof createAuthMiddleware>, accountOperations: AccountOperations): Router {
   const router = Router();
 
   router.post('/register', (req: Request, res: Response) => authController.register(req, res));
@@ -10,6 +11,9 @@ export function createAuthRoutes(authController: AuthController, authMiddleware:
   router.post('/refresh', (req: Request, res: Response) => authController.refresh(req, res));
   router.post('/logout', authMiddleware, (req: Request, res: Response) => authController.logout(req, res));
   router.get('/me', authMiddleware, (req: Request, res: Response) => authController.getMe(req, res));
+  router.delete('/me', authMiddleware, (req, res, next) =>
+    accountOperations.run(req, res, next, () => authController.deleteAccount(req, res))
+  );
 
   return router;
 }

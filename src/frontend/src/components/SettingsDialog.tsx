@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../services/api.js';
 import { Button } from './Button.js';
+import { useAuth } from '../context/AuthContext.js';
 import './SettingsDialog.css';
 
 interface SystemInfo {
@@ -15,12 +16,40 @@ interface SettingsDialogProps {
   onClose: () => void;
 }
 
-type Tab = 'about' | 'privacy' | 'credits' | 'debug';
+type Tab = 'about' | 'privacy' | 'credits' | 'debug' | 'account';
 
 export const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<Tab>('about');
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
   const [loading, setLoading] = useState(false);
+  const { user, deleteAccount } = useAuth();
+  const [password, setPassword] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setPassword('');
+      setConfirmDelete(false);
+      setDeleteError(null);
+    }
+  }, [isOpen]);
+
+  const handleDeleteAccount = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!confirmDelete || !password || deleting) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteAccount(password);
+      onClose();
+    } catch (error: any) {
+      setDeleteError(error.response?.data?.error || 'Could not delete account. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen && activeTab === 'debug' && !systemInfo) {
@@ -45,43 +74,84 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose 
   if (!isOpen) return null;
 
   return (
-    <div className="settings-dialog-overlay" onClick={onClose}>
+    <div className="settings-dialog-overlay" onClick={deleting ? undefined : onClose}>
       <div className="settings-dialog" onClick={(e) => e.stopPropagation()}>
         <div className="settings-header">
           <h2>Settings</h2>
-          <button className="settings-close" onClick={onClose}>
+          <button className="settings-close" onClick={onClose} disabled={deleting} aria-label="Close settings">
             ✕
           </button>
         </div>
 
         <div className="settings-tabs">
+          {user && (
+            <button
+              className={`settings-tab ${activeTab === 'account' ? 'active' : ''}`}
+              onClick={() => setActiveTab('account')}
+              disabled={deleting}
+            >
+              Account
+            </button>
+          )}
           <button
             className={`settings-tab ${activeTab === 'about' ? 'active' : ''}`}
             onClick={() => setActiveTab('about')}
+            disabled={deleting}
           >
             Terms
           </button>
           <button
             className={`settings-tab ${activeTab === 'privacy' ? 'active' : ''}`}
             onClick={() => setActiveTab('privacy')}
+            disabled={deleting}
           >
             Privacy
           </button>
           <button
             className={`settings-tab ${activeTab === 'credits' ? 'active' : ''}`}
             onClick={() => setActiveTab('credits')}
+            disabled={deleting}
           >
             Credits
           </button>
           <button
             className={`settings-tab ${activeTab === 'debug' ? 'active' : ''}`}
             onClick={() => setActiveTab('debug')}
+            disabled={deleting}
           >
             Debug
           </button>
         </div>
 
         <div className="settings-content">
+          {activeTab === 'account' && user && (
+            <div className="settings-tab-content">
+              <h3>Account</h3>
+              <p>{user.email}</p>
+              <h3>Delete account</h3>
+              <p>Permanently delete your account, photos, tags, descriptions, and sign-in sessions from this server. This cannot be undone. Backups and data sent to external AI providers are not affected.</p>
+              <form className="account-delete-form" onSubmit={handleDeleteAccount}>
+                <label htmlFor="delete-account-password">Password</label>
+                <input
+                  id="delete-account-password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  disabled={deleting}
+                  required
+                />
+                <label className="account-confirm">
+                  <input type="checkbox" checked={confirmDelete} onChange={(event) => setConfirmDelete(event.target.checked)} disabled={deleting} />
+                  I understand this permanently deletes my account and photos.
+                </label>
+                {deleteError && <p className="account-delete-error" role="alert">{deleteError}</p>}
+                <Button type="submit" variant="danger" disabled={!confirmDelete || !password} isLoading={deleting}>
+                  {deleting ? 'Deleting account...' : 'Delete account'}
+                </Button>
+              </form>
+            </div>
+          )}
           {activeTab === 'about' && (
             <div className="settings-tab-content">
               <h3>Terms of Service</h3>
@@ -206,7 +276,7 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose 
         </div>
 
         <div className="settings-footer">
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={onClose} disabled={deleting}>
             Close
           </Button>
         </div>

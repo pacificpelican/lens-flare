@@ -299,13 +299,13 @@ OPENAI_MODEL=gpt-4-vision
 - [x] Image editor (crop, undo/redo, color adjustments)
 - [x] Webcam integration (authenticated users)
 - [x] User settings & preferences (terms, privacy, debug info)
+- [x] Account deletion with photo and account data removal
 - [x] Marketing landing page
 - [x] Unauthenticated camera access
 - [x] Web Share API support (mobile download/share)
 
 ### 🚧 In Progress
 - [ ] Browser compatibility (camera rendering on Edge/Firefox)
-- [ ] Settings: account deletion
 - [ ] Advanced filtering & sorting options
 
 ### 📋 Planned
@@ -316,6 +316,11 @@ OPENAI_MODEL=gpt-4-vision
 - [ ] Mobile app (Electron/React Native)
 
 ## Development Notes
+
+### Deleting an Account
+Signed-in users can delete their account from Settings > Account after confirming their password. This removes their account, sessions, photo records, tags, and the photo files referenced by those records. The action cannot be undone. Backups, data sent to external AI providers, and previously orphaned files that are no longer associated with a photo record are not removed.
+
+Photo changes and account deletion are coordinated within one backend process. Deployments running multiple backend processes must stop other instances and active uploads before deleting an account.
 
 ### Adding New Database Queries
 Use the `db.query<T>()` and `db.run()` methods from the unified `IDatabase` interface. They work identically on both SQLite and MySQL.
@@ -331,10 +336,15 @@ Use the `db.query<T>()` and `db.run()` methods from the unified `IDatabase` inte
 - Custom CSS in component `.css` files for design system compliance
 - CSS variables in `src/frontend/src/index.css` for theming
 
-## Testing (Coming)
-- Unit tests: Jest
-- Integration tests: Supertest (for API)
-- E2E tests: Playwright (for UI)
+## Testing
+
+Run the account deletion regression tests with:
+
+```bash
+npm test
+```
+
+Further unit and end-to-end test coverage is planned.
 
 ## Deployment
 

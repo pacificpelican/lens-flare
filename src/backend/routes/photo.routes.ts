@@ -4,10 +4,12 @@ import path from 'path';
 import crypto from 'crypto';
 import { PhotoController } from '../controllers/photo.controller.js';
 import { createAuthMiddleware } from '../middleware/auth.js';
+import { AccountOperations } from '../middleware/account-operations.js';
 
 export function createPhotoRoutes(
   photoController: PhotoController,
-  authMiddleware: ReturnType<typeof createAuthMiddleware>
+  authMiddleware: ReturnType<typeof createAuthMiddleware>,
+  accountOperations: AccountOperations
 ): Router {
   const router = Router();
 
@@ -57,8 +59,11 @@ export function createPhotoRoutes(
   });
 
   // Photo routes
-  router.post('/upload', authMiddleware, upload.array('photo', 50), (req: Request, res: Response) =>
-    photoController.upload(req, res)
+  router.post('/upload', authMiddleware, (req, res, next) =>
+    accountOperations.run(req, res, next, async () => {
+      await new Promise<void>((resolve, reject) => upload.array('photo', 50)(req, res, (error) => error ? reject(error) : resolve()));
+      await photoController.upload(req, res);
+    })
   );
 
   router.get('/', authMiddleware, (req: Request, res: Response) =>
@@ -73,26 +78,29 @@ export function createPhotoRoutes(
     photoController.getDetail(req, res)
   );
 
-  router.put('/:id', authMiddleware, (req: Request, res: Response) =>
-    photoController.update(req, res)
+  router.put('/:id', authMiddleware, (req, res, next) =>
+    accountOperations.run(req, res, next, () => photoController.update(req, res))
   );
 
-  router.delete('/:id', authMiddleware, (req: Request, res: Response) =>
-    photoController.delete(req, res)
+  router.delete('/:id', authMiddleware, (req, res, next) =>
+    accountOperations.run(req, res, next, () => photoController.delete(req, res))
   );
 
   // Tag routes
-  router.post('/:id/tags', authMiddleware, (req: Request, res: Response) =>
-    photoController.addTag(req, res)
+  router.post('/:id/tags', authMiddleware, (req, res, next) =>
+    accountOperations.run(req, res, next, () => photoController.addTag(req, res))
   );
 
-  router.delete('/:id/tags/:tagId', authMiddleware, (req: Request, res: Response) =>
-    photoController.removeTag(req, res)
+  router.delete('/:id/tags/:tagId', authMiddleware, (req, res, next) =>
+    accountOperations.run(req, res, next, () => photoController.removeTag(req, res))
   );
 
   // Replace photo file (for edited photos)
-  router.post('/:id/replace', authMiddleware, upload.single('file'), (req: Request, res: Response) =>
-    photoController.replacePhoto(req, res)
+  router.post('/:id/replace', authMiddleware, (req, res, next) =>
+    accountOperations.run(req, res, next, async () => {
+      await new Promise<void>((resolve, reject) => upload.single('file')(req, res, (error) => error ? reject(error) : resolve()));
+      await photoController.replacePhoto(req, res);
+    })
   );
 
   // Export photo in different format

@@ -110,6 +110,11 @@ export class ApiClient {
     }
   }
 
+  async deleteAccount(password: string) {
+    await this.client.delete('/api/auth/me', { data: { password } });
+    localStorage.removeItem('access_token');
+  }
+
   async getCurrentUser(): Promise<UserProfile> {
     const response = await this.client.get<{ data: UserProfile }>('/api/auth/me');
     return response.data.data;

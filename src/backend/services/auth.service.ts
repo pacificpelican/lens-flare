@@ -45,7 +45,8 @@ export class AuthService {
   async verifyAccessToken(token: string): Promise<JwtPayload | null> {
     try {
       const payload = jwt.verify(token, this.jwtSecret) as JwtPayload;
-      return payload;
+      const users = await this.db.query<{ id: string }>('SELECT id FROM users WHERE id = ?', [payload.user_id]);
+      return users.length ? payload : null;
     } catch {
       return null;
     }

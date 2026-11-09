@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import crypto from 'crypto';
+import fs from 'fs/promises';
+import path from 'path';
 import { AuthService } from '../services/auth.service.js';
 import { IDatabase } from '../db/database.js';
 import { RegisterRequest, LoginRequest, AuthResponse, UserProfile } from '@shared/types';
@@ -7,8 +9,57 @@ import { RegisterRequest, LoginRequest, AuthResponse, UserProfile } from '@share
 export class AuthController {
   constructor(
     private db: IDatabase,
-    private authService: AuthService
+    private authService: AuthService,
+    private uploadDir: string
   ) {}
+
+  async deleteAccount(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ success: false, error: 'Not authenticated' });
+        return;
+      }
+
+      const { password } = req.body;
+      if (typeof password !== 'string' || !password) {
+        res.status(400).json({ success: false, error: 'Password is required' });
+        return;
+      }
+
+      const userId = req.user.user_id;
+      const users = await this.db.query<{ password_hash: string }>(
+        'SELECT password_hash FROM users WHERE id = ?', [userId]
+      );
+      if (!users.length || !(await this.authService.verifyPassword(password, users[0].password_hash))) {
+        res.status(400).json({ success: false, error: 'Incorrect password' });
+        return;
+      }
+
+      const photos = await this.db.query<{ filename: string }>(
+        'SELECT filename FROM photos WHERE user_id = ?', [userId]
+      );
+      for (const photo of photos) {
+        if (path.basename(photo.filename) !== photo.filename || photo.filename === '.' || photo.filename === '..') {
+          throw new Error('Invalid stored photo filename');
+        }
+        try {
+          await fs.unlink(path.join(this.uploadDir, photo.filename));
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        }
+      }
+
+      await this.db.run('DELETE FROM tags WHERE user_id = ?', [userId]);
+      await this.db.run('DELETE FROM photos WHERE user_id = ?', [userId]);
+      await this.db.run('DELETE FROM refresh_tokens WHERE user_id = ?', [userId]);
+      await this.db.run('DELETE FROM users WHERE id = ?', [userId]);
+      res.clearCookie('refresh_token');
+      res.status(200).json({ success: true, message: 'Account deleted' });
+    } catch (error) {
+      console.error('Account deletion error:', error);
+      res.status(500).json({ success: false, error: 'Account deletion did not finish. Some photos may already be deleted; please try again.' });
+    }
+  }
 
   async register(req: Request, res: Response): Promise<void> {
     try {

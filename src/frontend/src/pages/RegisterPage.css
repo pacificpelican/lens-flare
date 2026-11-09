@@ -16,6 +16,17 @@
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
 }
 
+.register-logo-link {
+  text-decoration: none;
+  display: block;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.register-logo-link:hover {
+  opacity: 0.8;
+}
+
 .register-title {
   margin: 0 0 0.25rem 0;
   font-size: 2rem;

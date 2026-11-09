@@ -57,8 +57,9 @@ async function bootstrap() {
   const app: Express = express();
 
   // Middleware
+  const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:5174').split(',');
   app.use(cors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: corsOrigins,
     credentials: true,
     exposedHeaders: ['Content-Disposition'],
   }));

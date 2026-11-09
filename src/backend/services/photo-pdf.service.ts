@@ -1,4 +1,4 @@
-// import PDFDocument from 'pdfkit'; // TODO: Bulk export feature (requires pdfkit)
+import PDFDocument from 'pdfkit';
 import sharp from 'sharp';
 import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
@@ -14,11 +14,7 @@ function displayValue(value: unknown): string {
   return JSON.stringify(value, null, 2) ?? String(value);
 }
 
-// TODO: PDF export feature implementation deferred (requires pdfkit dependency)
-// This function should generate a multi-page PDF with all user photos and metadata
 export async function createPhotoPdf(photos: PhotoDetail[], owner: string, printedAt: Date, uploadDir: string): Promise<Buffer> {
-  throw new Error('PDF export feature not yet implemented');
-  /*
   const document = new PDFDocument({ size: 'LETTER', margin: 45, autoFirstPage: false, info: { Title: `${owner} Photos`, Author: 'Lens Flare' } });
   const chunks: Buffer[] = [];
   document.on('data', (chunk: Buffer) => chunks.push(chunk));
@@ -101,5 +97,4 @@ export async function createPhotoPdf(photos: PhotoDetail[], owner: string, print
   document.fillColor('#5431a0').text('https://github.com/pacificpelican/lens-flare', { align: 'center', link: 'https://github.com/pacificpelican/lens-flare', underline: true });
   document.end();
   return finished;
-  */
 }

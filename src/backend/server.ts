@@ -13,6 +13,7 @@ import { PhotoController } from './controllers/photo.controller.js';
 import { createAuthRoutes } from './routes/auth.routes.js';
 import { createPhotoRoutes } from './routes/photo.routes.js';
 import { createAuthMiddleware } from './middleware/auth.js';
+import { mkdir } from 'fs/promises';
 import path from 'path';
 
 async function bootstrap() {
@@ -44,6 +45,7 @@ async function bootstrap() {
   // Create controllers
   const authController = new AuthController(db, authService);
   const uploadDir = path.join(process.cwd(), 'uploads');
+  await mkdir(uploadDir, { recursive: true });
   const photoController = new PhotoController(photoService, exifService, aiDescriptionService, uploadDir);
 
   // Create middleware

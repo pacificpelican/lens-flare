@@ -211,7 +211,7 @@ export const GalleryPage: React.FC = () => {
               ⚙️
             </button>
             <div className="gallery-user-info">
-              {user && <span className="gallery-user-email">{user.email}</span>}
+              {user && <span className="gallery-user-email" title={user.email}>{user.email}</span>}
             </div>
             <Button variant="secondary" size="sm" onClick={handleLogout}>
               Logout

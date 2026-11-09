@@ -177,6 +177,10 @@ Run the frontend with hot reload:
 npm run dev:frontend
 ```
 
+### Photo PDF
+
+Use the printer button beside the gallery filters to download a PDF of all photos matching the current search and filters, including results on other gallery pages. Each photo has its own page with its stored metadata; long metadata may continue onto additional pages. The final page contains Lens Flare information and its GitHub URL. Missing or unsupported images are marked in the PDF, while their metadata remains available.
+
 ### Building for Production
 
 Outputs to `dist/backend/` and `src/frontend/dist/`
@@ -295,6 +299,7 @@ OPENAI_MODEL=gpt-4-vision
 - [x] Photo tagging system
 - [x] AI description generation (Ollama integration)
 - [x] Image processing (resize, format conversion, AVIF export)
+- [x] Filtered photo PDF with metadata
 - [x] Photo deletion with confirmation
 - [x] Image editor (crop, undo/redo, color adjustments)
 - [x] Webcam integration (authenticated users)

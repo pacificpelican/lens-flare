@@ -151,6 +151,57 @@
   transform: scale(0.98);
 }
 
+.gallery-print-btn {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #333;
+  cursor: pointer;
+}
+
+.gallery-print-btn:hover:not(:disabled) {
+  background: #f3f0ff;
+  border-color: #7c3aed;
+  color: #7c3aed;
+}
+
+.gallery-print-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.gallery-print-status,
+.gallery-print-error {
+  margin: 0;
+  padding: 8px 24px;
+  font-size: 14px;
+}
+
+.gallery-print-error {
+  color: #b42318;
+}
+
+@media (max-width: 600px) {
+  .gallery-search-section {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .gallery-search-section .search-bar {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .gallery-filter-btn {
+    padding: 10px;
+  }
+}
+
 .gallery-input-hidden {
   display: none;
 }

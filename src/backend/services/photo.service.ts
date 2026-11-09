@@ -5,6 +5,14 @@ import crypto from 'crypto';
 export class PhotoService {
   constructor(private db: IDatabase) {}
 
+  async getOwnerName(userId: string): Promise<string> {
+    const users = await this.db.query<{ username: string | null; email: string }>(
+      'SELECT username, email FROM users WHERE id = ?', [userId]
+    );
+    if (!users.length) throw new Error('User not found');
+    return users[0].username?.trim() || users[0].email;
+  }
+
   async createPhoto(data: {
     userId: string;
     filename: string;
@@ -86,32 +94,32 @@ export class PhotoService {
       iso?: number;
     }
   ): Promise<{ photos: Photo[]; total: number; totalPages: number }> {
-    let whereConditions = ['user_id = ?'];
+    let whereConditions = ['p.user_id = ?'];
     const params: unknown[] = [userId];
 
     // Search in title, descriptions
     if (filters?.search) {
       const searchTerm = `%${filters.search}%`;
       whereConditions.push(
-        `(title LIKE ? OR ai_description LIKE ? OR user_description LIKE ?)`
+        `(p.title LIKE ? OR p.ai_description LIKE ? OR p.user_description LIKE ?)`
       );
       params.push(searchTerm, searchTerm, searchTerm);
     }
 
     // Date range filter
     if (filters?.startDate) {
-      whereConditions.push('upload_date >= ?');
+      whereConditions.push('p.upload_date >= ?');
       params.push(filters.startDate);
     }
     if (filters?.endDate) {
-      whereConditions.push('upload_date <= ?');
+      whereConditions.push('p.upload_date <= ?');
       params.push(filters.endDate);
     }
 
     // Camera model filter (from EXIF data)
     if (filters?.cameraModel) {
       whereConditions.push(
-        `(json_extract(exif_data, '$.make') LIKE ? OR json_extract(exif_data, '$.model') LIKE ?)`
+        `(COALESCE(json_extract(p.exif_data, '$.make'), json_extract(p.exif_data, '$."Camera Make"')) LIKE ? OR COALESCE(json_extract(p.exif_data, '$.model'), json_extract(p.exif_data, '$."Camera Model"')) LIKE ?)`
       );
       const cameraTerm = `%${filters.cameraModel}%`;
       params.push(cameraTerm, cameraTerm);
@@ -119,14 +127,14 @@ export class PhotoService {
 
     // ISO filter (from EXIF data)
     if (filters?.iso) {
-      whereConditions.push(`json_extract(exif_data, '$.iso') = ?`);
+      whereConditions.push(`CAST(COALESCE(json_extract(p.exif_data, '$.iso'), json_extract(p.exif_data, '$.ISO')) AS SIGNED) = ?`);
       params.push(filters.iso);
     }
 
     // Build base query
     let query = `SELECT id, user_id, filename, original_filename, title, user_description, ai_description,
               exif_data, file_size, mime_type, upload_date, created_at, updated_at
-       FROM photos WHERE ${whereConditions.join(' AND ')}`;
+      FROM photos p WHERE ${whereConditions.join(' AND ')}`;
 
     // Add tag filter if specified
     if (filters?.tags && filters.tags.length > 0) {
@@ -143,7 +151,7 @@ export class PhotoService {
 
     // Get total count
     const countConditions = whereConditions.join(' AND ');
-    let countQuery = `SELECT COUNT(*) as count FROM photos WHERE ${countConditions}`;
+    let countQuery = `SELECT COUNT(*) as count FROM photos p WHERE ${countConditions}`;
     const countParams = params.slice(); // Copy params for count query
 
     if (filters?.tags && filters.tags.length > 0) {
@@ -158,13 +166,13 @@ export class PhotoService {
 
     const countResult = await this.db.query<{ count: number }>(
       countQuery,
-      countParams.concat(filters?.tags || [])
+      countParams
     );
     const total = countResult[0].count;
 
     // Get paginated results
     const offset = (page - 1) * perPage;
-    query += ` ORDER BY upload_date ${sortOrder.toUpperCase()} LIMIT ? OFFSET ?`;
+    query += ` ORDER BY p.upload_date ${sortOrder.toUpperCase()}, p.id ${sortOrder.toUpperCase()} LIMIT ? OFFSET ?`;
     params.push(perPage, offset);
 
     const photos = await this.db.query<Photo>(query, params);
@@ -347,7 +355,8 @@ export class PhotoService {
   }> {
     // Get unique camera makes/models from EXIF data
     const cameras = await this.db.query<{ make?: string; model?: string }>(
-      `SELECT DISTINCT json_extract(exif_data, '$.make') as make, json_extract(exif_data, '$.model') as model
+            `SELECT DISTINCT COALESCE(json_extract(exif_data, '$.make'), json_extract(exif_data, '$."Camera Make"')) as make,
+              COALESCE(json_extract(exif_data, '$.model'), json_extract(exif_data, '$."Camera Model"')) as model
        FROM photos WHERE user_id = ? AND exif_data IS NOT NULL
        ORDER BY make, model`,
       [userId]
@@ -355,7 +364,7 @@ export class PhotoService {
 
     // Get unique ISO values
     const isos = await this.db.query<{ iso: number }>(
-      `SELECT DISTINCT CAST(json_extract(exif_data, '$.iso') AS INTEGER) as iso
+      `SELECT DISTINCT CAST(COALESCE(json_extract(exif_data, '$.iso'), json_extract(exif_data, '$.ISO')) AS SIGNED) as iso
        FROM photos WHERE user_id = ? AND exif_data IS NOT NULL
        ORDER BY iso`,
       [userId]

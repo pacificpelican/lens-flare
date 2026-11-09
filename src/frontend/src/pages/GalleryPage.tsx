@@ -9,7 +9,28 @@ import { SearchBar } from '../components/SearchBar';
 import { FilterPanel } from '../components/FilterPanel';
 import { SettingsDialog } from '../components/SettingsDialog.js';
 import { Button } from '../components/Button';
+import { Printer } from 'lucide-react';
 import './GalleryPage.css';
+
+type PhotoFilters = {
+  search?: string;
+  tags?: string[];
+  startDate?: string;
+  endDate?: string;
+  cameraModel?: string;
+  iso?: number;
+};
+
+function filterParams(filters: PhotoFilters): URLSearchParams {
+  const params = new URLSearchParams();
+  if (filters.search) params.append('search', filters.search);
+  if (filters.startDate) params.append('startDate', filters.startDate);
+  if (filters.endDate) params.append('endDate', filters.endDate);
+  if (filters.cameraModel) params.append('cameraModel', filters.cameraModel);
+  if (filters.iso) params.append('iso', filters.iso.toString());
+  filters.tags?.forEach((tag) => params.append('tags', tag));
+  return params;
+}
 
 export const GalleryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -23,14 +44,9 @@ export const GalleryPage: React.FC = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilters, setActiveFilters] = useState<{
-    search?: string;
-    tags?: string[];
-    startDate?: string;
-    endDate?: string;
-    cameraModel?: string;
-    iso?: number;
-  }>({});
+  const [activeFilters, setActiveFilters] = useState<PhotoFilters>({});
+  const [printing, setPrinting] = useState(false);
+  const [printError, setPrintError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
@@ -41,18 +57,9 @@ export const GalleryPage: React.FC = () => {
     try {
       setIsLoading(true);
       // Build query string with filters
-      const params = new URLSearchParams();
+      const params = filterParams(activeFilters);
       params.append('page', page.toString());
       params.append('perPage', '20');
-      
-      if (activeFilters.search) params.append('search', activeFilters.search);
-      if (activeFilters.startDate) params.append('startDate', activeFilters.startDate);
-      if (activeFilters.endDate) params.append('endDate', activeFilters.endDate);
-      if (activeFilters.cameraModel) params.append('cameraModel', activeFilters.cameraModel);
-      if (activeFilters.iso) params.append('iso', activeFilters.iso.toString());
-      if (activeFilters.tags && activeFilters.tags.length > 0) {
-        activeFilters.tags.forEach(tag => params.append('tags', tag));
-      }
 
       const response = await apiClient.get<PaginatedResponse<Photo>>(
         `/api/photos?${params.toString()}`
@@ -148,6 +155,28 @@ export const GalleryPage: React.FC = () => {
     navigate(`/photo/${photoId}`);
   };
 
+  const handlePrint = async () => {
+    setPrinting(true);
+    setPrintError(null);
+    try {
+      const params = filterParams(activeFilters);
+      const response = await apiClient.getPhotoPdf(params);
+      const url = URL.createObjectURL(response.blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = response.filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      console.error('Photo PDF failed:', error);
+      setPrintError('Could not create the photo PDF. Please try again.');
+    } finally {
+      setPrinting(false);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -224,7 +253,18 @@ export const GalleryPage: React.FC = () => {
         >
           🔧 Filters
         </button>
+        <button
+          className="gallery-print-btn"
+          onClick={handlePrint}
+          disabled={printing}
+          title={printing ? 'Preparing photo PDF' : 'Download photo PDF'}
+          aria-label={printing ? 'Preparing photo PDF' : 'Download photo PDF'}
+        >
+          <Printer size={20} aria-hidden="true" />
+        </button>
       </div>
+      {printing && <p className="gallery-print-status" role="status">Preparing photo PDF...</p>}
+      {printError && <p className="gallery-print-error" role="alert">{printError}</p>}
 
       {/* Photo Grid */}
       <PhotoGrid photos={photos} isLoading={isLoading} onPhotoClick={handlePhotoClick} />

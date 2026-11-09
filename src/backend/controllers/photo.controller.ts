@@ -5,6 +5,19 @@ import { AiDescriptionService } from '../services/ai-description.service.js';
 import { PaginatedResponse, Photo, PhotoDetail } from '@shared/types';
 import fs from 'fs/promises';
 import path from 'path';
+import { createPhotoPdf } from '../services/photo-pdf.service.js';
+
+function getFilters(req: Request) {
+  const tags = req.query.tags;
+  return {
+    search: req.query.search as string | undefined,
+    tags: tags ? (Array.isArray(tags) ? tags.map(String) : [String(tags)]) : undefined,
+    startDate: req.query.startDate as string | undefined,
+    endDate: req.query.endDate as string | undefined,
+    cameraModel: req.query.cameraModel as string | undefined,
+    iso: req.query.iso ? parseInt(req.query.iso as string) : undefined,
+  };
+}
 
 export class PhotoController {
   constructor(
@@ -119,19 +132,7 @@ export class PhotoController {
       const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
 
       // Parse filter parameters
-      const tagsParam = req.query.tags;
-      const tagsArray = tagsParam 
-        ? (Array.isArray(tagsParam) ? tagsParam.map(t => String(t)) : [String(tagsParam)])
-        : undefined;
-
-      const filters = {
-        search: req.query.search as string | undefined,
-        tags: tagsArray,
-        startDate: req.query.startDate as string | undefined,
-        endDate: req.query.endDate as string | undefined,
-        cameraModel: req.query.cameraModel as string | undefined,
-        iso: req.query.iso ? parseInt(req.query.iso as string) : undefined,
-      };
+      const filters = getFilters(req);
 
       const { photos, total, totalPages } = await this.photoService.listPhotos(
         req.user.user_id,
@@ -157,6 +158,35 @@ export class PhotoController {
     } catch (error) {
       console.error('List photos error:', error);
       res.status(500).json({ success: false, error: 'Failed to fetch photos' });
+    }
+  }
+
+  async print(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ success: false, error: 'Not authenticated' });
+        return;
+      }
+      const userId = req.user.user_id;
+      const owner = await this.photoService.getOwnerName(userId);
+      const photos: PhotoDetail[] = [];
+      let page = 1;
+      let totalPages: number;
+      do {
+        const result = await this.photoService.listPhotos(userId, page, 50, 'upload_date', 'desc', getFilters(req));
+        for (const photo of result.photos) photos.push(await this.photoService.getPhotoDetail(photo.id, userId));
+        totalPages = result.totalPages;
+        page++;
+      } while (page <= totalPages);
+      const printedAt = new Date();
+      const pdf = await createPhotoPdf(photos, owner, printedAt, this.uploadDir);
+      const timestamp = printedAt.toISOString().replace(/[:.]/g, '-');
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="Lens_Flare_photos__${timestamp}.pdf"`);
+      res.send(pdf);
+    } catch (error) {
+      console.error('Print photos error:', error);
+      res.status(500).json({ success: false, error: 'Failed to create photo PDF' });
     }
   }
 

@@ -120,6 +120,14 @@ export class ApiClient {
     return response.data.data;
   }
 
+  async getPhotoPdf(params: URLSearchParams): Promise<{ blob: Blob; filename: string }> {
+    const response = await this.client.get<Blob>('/api/photos/print', { params, responseType: 'blob' });
+    const disposition = response.headers['content-disposition'] as string | undefined;
+    const filename = disposition?.match(/filename="([^"]+)"/)?.[1]
+      || `Lens_Flare_photos__${new Date().toISOString().replace(/[:.]/g, '-')}.pdf`;
+    return { blob: response.data, filename };
+  }
+
   // Generic request methods
   async get<T>(url: string, config = {}) {
     const response = await this.client.get<T>(url, config);

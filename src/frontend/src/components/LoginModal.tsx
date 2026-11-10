@@ -187,6 +187,18 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, default
             <Button type="submit" size="md" isLoading={isLoading}>
               Sign In
             </Button>
+
+            <a
+              href="/forgot-password"
+              className="login-modal-forgot-password"
+              onClick={(e) => {
+                e.preventDefault();
+                handleClose();
+                navigate('/forgot-password');
+              }}
+            >
+              Forgot password?
+            </a>
           </form>
         ) : (
           <form onSubmit={handleRegisterSubmit} className="login-modal-form">

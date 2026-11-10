@@ -138,6 +138,21 @@
   text-decoration: underline;
 }
 
+.login-modal-forgot-password {
+  text-align: center;
+  display: block;
+  font-size: 0.875rem;
+  color: #7c3aed;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.login-modal-forgot-password:hover {
+  color: #6d28d9;
+  text-decoration: underline;
+}
+
 @media (max-width: 640px) {
   .login-modal-content {
     margin: 1rem;

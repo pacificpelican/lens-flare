@@ -1,10 +1,29 @@
 import nodemailer from 'nodemailer';
 
 export class EmailService {
-  private transporter: nodemailer.Transporter;
+  private transporter: nodemailer.Transporter | null;
+  private isDryRun: boolean;
 
   constructor() {
-    this.transporter = this.initializeTransporter();
+    const emailProvider = process.env.EMAIL_PROVIDER || 'mailgun';
+    this.isDryRun = process.env.NODE_ENV === 'development' && !this.hasCredentials(emailProvider);
+    
+    if (this.isDryRun) {
+      console.log('⚠️ Email service in dry-run mode (no credentials configured)');
+      this.transporter = null;
+    } else {
+      this.transporter = this.initializeTransporter();
+    }
+  }
+
+  private hasCredentials(emailProvider: string): boolean {
+    if (emailProvider === 'mailgun') {
+      return !!(process.env.MAILGUN_SMTP_USER && process.env.MAILGUN_SMTP_PASS);
+    }
+    if (emailProvider === 'smtp') {
+      return !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+    }
+    return false;
   }
 
   private initializeTransporter(): nodemailer.Transporter {
@@ -61,7 +80,13 @@ export class EmailService {
     };
 
     try {
-      await this.transporter.sendMail(mailOptions);
+      if (this.isDryRun) {
+        console.log(`✓ [DRY-RUN] Password reset email would be sent to ${email}`);
+        console.log(`   Reset link: ${resetUrl}`);
+        return;
+      }
+
+      await this.transporter!.sendMail(mailOptions);
       console.log(`✓ Password reset email sent to ${email}`);
     } catch (error) {
       console.error('Error sending password reset email:', error);
@@ -70,8 +95,13 @@ export class EmailService {
   }
 
   async verifyConnection(): Promise<boolean> {
+    if (this.isDryRun) {
+      console.log('⚠️ Email service in dry-run mode');
+      return true;
+    }
+
     try {
-      await this.transporter.verify();
+      await this.transporter!.verify();
       console.log('✓ Email service connected');
       return true;
     } catch (error) {

@@ -193,14 +193,17 @@ export const PhotoDetailPage: React.FC = () => {
         </Button>
         <div className="header-spacer" />
         <div className="header-button-group">
-          <Button variant="primary" size="sm" onClick={() => setShowSettings(true)} title="Settings">
-            ⚙️ Settings
+          <Button variant="primary" size="sm" vertical onClick={() => setShowSettings(true)} title="Settings">
+            <span>⚙️</span>
+            <span>Settings</span>
           </Button>
-          <Button variant="primary" size="sm" onClick={() => setShowExport(true)}>
-            ⬇️ Export
+          <Button variant="primary" size="sm" vertical onClick={() => setShowExport(true)}>
+            <span>⬇️</span>
+            <span>Export</span>
           </Button>
-          <Button variant="primary" size="sm" onClick={() => setShowEditor(true)}>
-            ✏️ Edit
+          <Button variant="primary" size="sm" vertical onClick={() => setShowEditor(true)}>
+            <span>✏️</span>
+            <span>Edit</span>
           </Button>
         </div>
       </header>

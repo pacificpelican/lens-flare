@@ -21,6 +21,11 @@
   }
 }
 
+.btn.btn-vertical {
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .btn-primary {
   background-color: var(--color-primary);
   color: white;

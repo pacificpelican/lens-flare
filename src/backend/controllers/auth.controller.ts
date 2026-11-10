@@ -3,17 +3,21 @@ import crypto from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
 import { AuthService } from '../services/auth.service.js';
-import { passwordResetService } from '../services/password-reset.service.js';
+import { PasswordResetService } from '../services/password-reset.service.js';
 import { IDatabase } from '../db/database.js';
 import { RegisterRequest, LoginRequest, AuthResponse, UserProfile } from '@shared/types';
 import { getConfig } from '../config.js';
 
 export class AuthController {
+  private passwordResetService: PasswordResetService;
+
   constructor(
     private db: IDatabase,
     private authService: AuthService,
     private uploadDir: string
-  ) {}
+  ) {
+    this.passwordResetService = new PasswordResetService(db);
+  }
 
   async deleteAccount(req: Request, res: Response): Promise<void> {
     try {
@@ -315,7 +319,7 @@ export class AuthController {
         return;
       }
 
-      const result = await passwordResetService.requestPasswordReset(email);
+      const result = await this.passwordResetService.requestPasswordReset(email);
       res.status(200).json(result);
     } catch (error) {
       console.error('Forgot password error:', error);
@@ -332,7 +336,7 @@ export class AuthController {
         return;
       }
 
-      const result = await passwordResetService.validateResetToken(token);
+      const result = await this.passwordResetService.validateResetToken(token);
       res.status(200).json(result);
     } catch (error) {
       console.error('Validate reset token error:', error);
@@ -359,7 +363,7 @@ export class AuthController {
         return;
       }
 
-      const result = await passwordResetService.resetPassword(token, newPassword);
+      const result = await this.passwordResetService.resetPassword(token, newPassword);
       
       if (result.success) {
         res.status(200).json(result);

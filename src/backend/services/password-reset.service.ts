@@ -1,17 +1,21 @@
 import { v4 as uuidv4 } from 'uuid';
-import { db } from '../db/database.js';
+import { IDatabase } from '../db/database.js';
 import { emailService } from './email.service.js';
 
 const RESET_TOKEN_EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export class PasswordResetService {
+  constructor(private db: IDatabase) {}
+
   async requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
     try {
       // Find user by email
-      const user = await db.get(
+      const users = await this.db.query<{ id: string; username: string }>(
         'SELECT id, username FROM users WHERE email = ?',
         [email]
       );
+
+      const user = users[0];
 
       if (!user) {
         // For security, don't reveal if email exists
@@ -23,7 +27,7 @@ export class PasswordResetService {
       const resetToken = uuidv4();
       const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRATION_MS).toISOString();
 
-      await db.run(
+      await this.db.run(
         `INSERT INTO password_reset_tokens (id, user_id, token, expires_at, created_at)
          VALUES (?, ?, ?, ?, ?)`,
         [tokenId, user.id, resetToken, expiresAt, new Date().toISOString()]
@@ -41,11 +45,13 @@ export class PasswordResetService {
 
   async validateResetToken(token: string): Promise<{ valid: boolean; userId?: string; message: string }> {
     try {
-      const resetRecord = await db.get(
+      const resetRecords = await this.db.query<{ id: string; user_id: string; expires_at: string; used_at: string | null }>(
         `SELECT id, user_id, expires_at, used_at FROM password_reset_tokens
          WHERE token = ?`,
         [token]
       );
+
+      const resetRecord = resetRecords[0];
 
       if (!resetRecord) {
         return { valid: false, message: 'Invalid or expired reset token' };
@@ -82,19 +88,19 @@ export class PasswordResetService {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
 
       // Update user password
-      await db.run(
+      await this.db.run(
         'UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?',
         [hashedPassword, new Date().toISOString(), userId]
       );
 
       // Mark token as used
-      await db.run(
+      await this.db.run(
         'UPDATE password_reset_tokens SET used_at = ? WHERE token = ?',
         [new Date().toISOString(), token]
       );
 
       // Clean up expired tokens for this user
-      await db.run(
+      await this.db.run(
         `DELETE FROM password_reset_tokens 
          WHERE user_id = ? AND expires_at < ?`,
         [userId, new Date().toISOString()]
@@ -108,4 +114,3 @@ export class PasswordResetService {
   }
 }
 
-export const passwordResetService = new PasswordResetService();

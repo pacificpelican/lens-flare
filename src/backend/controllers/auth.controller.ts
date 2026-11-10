@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import fs from 'fs/promises';
 import path from 'path';
 import { AuthService } from '../services/auth.service.js';
+import { passwordResetService } from '../services/password-reset.service.js';
 import { IDatabase } from '../db/database.js';
 import { RegisterRequest, LoginRequest, AuthResponse, UserProfile } from '@shared/types';
 import { getConfig } from '../config.js';
@@ -302,6 +303,72 @@ export class AuthController {
     } catch (error) {
       console.error('Token refresh error:', error);
       res.status(500).json({ success: false, error: 'Token refresh failed' });
+    }
+  }
+
+  async forgotPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.body;
+
+      if (typeof email !== 'string' || !email) {
+        res.status(400).json({ success: false, error: 'Email is required' });
+        return;
+      }
+
+      const result = await passwordResetService.requestPasswordReset(email);
+      res.status(200).json(result);
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      res.status(500).json({ success: false, error: 'Failed to process password reset request' });
+    }
+  }
+
+  async validateResetToken(req: Request, res: Response): Promise<void> {
+    try {
+      const { token } = req.body;
+
+      if (typeof token !== 'string' || !token) {
+        res.status(400).json({ success: false, error: 'Token is required' });
+        return;
+      }
+
+      const result = await passwordResetService.validateResetToken(token);
+      res.status(200).json(result);
+    } catch (error) {
+      console.error('Validate reset token error:', error);
+      res.status(500).json({ success: false, error: 'Failed to validate token' });
+    }
+  }
+
+  async resetPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { token, newPassword } = req.body;
+
+      if (typeof token !== 'string' || !token) {
+        res.status(400).json({ success: false, error: 'Token is required' });
+        return;
+      }
+
+      if (typeof newPassword !== 'string' || !newPassword) {
+        res.status(400).json({ success: false, error: 'New password is required' });
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+        return;
+      }
+
+      const result = await passwordResetService.resetPassword(token, newPassword);
+      
+      if (result.success) {
+        res.status(200).json(result);
+      } else {
+        res.status(400).json(result);
+      }
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({ success: false, error: 'Failed to reset password' });
     }
   }
 }

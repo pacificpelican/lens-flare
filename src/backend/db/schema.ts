@@ -77,5 +77,24 @@ export async function initializeSchema(db: IDatabase): Promise<void> {
     ON refresh_tokens(user_id)
   `);
 
+  // Password reset tokens table
+  await db.run(`
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      expires_at TEXT NOT NULL,
+      used_at TEXT,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Create index for token lookup
+  await db.run(`
+    CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user_id 
+    ON password_reset_tokens(user_id)
+  `);
+
   console.log('✓ Database schema initialized');
 }

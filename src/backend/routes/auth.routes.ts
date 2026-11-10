@@ -15,6 +15,9 @@ export function createAuthRoutes(authController: AuthController, authMiddleware:
   router.delete('/me', authMiddleware, (req, res, next) =>
     accountOperations.run(req, res, next, () => authController.deleteAccount(req, res))
   );
+  router.post('/forgot-password', (req: Request, res: Response) => authController.forgotPassword(req, res));
+  router.post('/validate-reset-token', (req: Request, res: Response) => authController.validateResetToken(req, res));
+  router.post('/reset-password', (req: Request, res: Response) => authController.resetPassword(req, res));
 
   return router;
 }

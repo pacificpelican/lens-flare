@@ -4,6 +4,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { GalleryPage } from './pages/GalleryPage';
 import { PhotoDetailPage } from './pages/PhotoDetailPage';
 import { Footer } from './components/Footer';
@@ -34,6 +36,8 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={isAuthenticated ? <Navigate to="/gallery" replace /> : <LoginPage />} />
       <Route path="/register" element={isAuthenticated ? <Navigate to="/gallery" replace /> : <RegisterPage />} />
+      <Route path="/forgot-password" element={isAuthenticated ? <Navigate to="/gallery" replace /> : <ForgotPasswordPage />} />
+      <Route path="/reset-password" element={isAuthenticated ? <Navigate to="/gallery" replace /> : <ResetPasswordPage />} />
       <Route
         path="/gallery"
         element={

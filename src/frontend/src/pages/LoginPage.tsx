@@ -173,6 +173,10 @@ export const LoginPage: React.FC = () => {
             <Button type="submit" size="md" isLoading={isLoading}>
               Sign In
             </Button>
+
+            <Link to="/forgot-password" className="login-forgot-password">
+              Forgot password?
+            </Link>
           </form>
         ) : (
           <form onSubmit={handleRegisterSubmit} className="login-form">

@@ -6,7 +6,7 @@ A desktop-first web app for archiving, organizing, and editing digital photos wi
 
 ## Project Status
 
-🚧 **In Development** — Core features complete, polishing UI and browser compatibility.
+✅ **Core Features Complete** — Photo archiving, AI descriptions, editing, webcam capture, and user management are fully implemented. Continuing refinement and browser compatibility work.
 
 ## Architecture Overview
 
@@ -109,23 +109,26 @@ lens-flare/
 4. **Token Expiry** → Client uses refresh token to silently obtain new access token
 5. **Logout** → Revoke all refresh tokens for user
 
-## API Routes (Planned)
+## API Routes
 
 ### Auth
 - `POST /api/auth/register` — Register new user
 - `POST /api/auth/login` — Login user
 - `POST /api/auth/logout` — Logout (requires auth)
 - `GET /api/auth/me` — Get current user profile (requires auth)
+- `GET /api/auth/config` — Get public app configuration (signups, email enabled)
+- `POST /api/auth/forgot-password` — Request password reset
+- `POST /api/auth/validate-reset-token` — Validate password reset token
+- `POST /api/auth/reset-password` — Complete password reset
+- `DELETE /api/auth/me` — Delete account (requires password)
 
-### Photos (Coming)
+### Photos
 - `GET /api/photos` — List user photos (paginated, sorted by upload date)
 - `GET /api/photos/:id` — Get single photo with EXIF & tags
-- `POST /api/photos` — Upload new photo
+- `POST /api/photos` — Upload new photo(s)
 - `PUT /api/photos/:id` — Update photo title, descriptions, tags
 - `DELETE /api/photos/:id` — Delete photo
-
-### AI Descriptions (Coming)
-- `POST /api/photos/:id/generate-description` — Generate AI description for photo
+- `GET /api/photos/print` — Export photos to PDF with metadata
 
 ## Setup & Development
 
@@ -293,13 +296,13 @@ OPENAI_MODEL=gpt-4-vision
 - [x] Authentication (JWT + refresh tokens)
 - [x] User registration & login
 - [x] Environment-based configuration
-- [x] Photo upload & storage
+- [x] Photo upload & storage (single & batch)
 - [x] Contact sheet grid UI with search & filtering
 - [x] Photo detail page with EXIF data display
 - [x] Photo tagging system
-- [x] AI description generation (Ollama integration)
+- [x] AI description generation (Ollama integration with cloud provider fallback)
 - [x] Image processing (resize, format conversion, AVIF export)
-- [x] Filtered photo PDF with metadata
+- [x] Filtered photo PDF export with metadata
 - [x] Photo deletion with confirmation
 - [x] Image editor (crop, undo/redo, color adjustments)
 - [x] Webcam integration (authenticated users)
@@ -308,10 +311,12 @@ OPENAI_MODEL=gpt-4-vision
 - [x] Marketing landing page
 - [x] Unauthenticated camera access
 - [x] Web Share API support (mobile download/share)
+- [x] Password reset via email (configurable providers: Mailgun, SMTP)
+- [x] Registration controls (open signup, invite codes)
+- [x] Email feature toggle (gracefully disable password reset if no email configured)
 
 ### 🚧 In Progress
-- [ ] Browser compatibility (camera rendering on Edge/Firefox)
-- [ ] Advanced filtering & sorting options
+- [ ] Browser compatibility refinements (camera rendering on Edge/Firefox)
 
 ### 📋 Planned
 - [ ] Batch export options
@@ -369,13 +374,4 @@ The backend can be packaged with Electron for a desktop app using the Node proce
 ## License
 
 ISC
-
----
-
-## Next Steps
-
-1. **Frontend UI** — Build contact sheet grid component and photo detail page
-2. **Photo Service** — Implement upload, storage, and processing logic
-3. **EXIF Extraction** — Parse and display EXIF data on photo pages
-4. **AI Integration** — Wire up Ollama or cloud AI for descriptions
 5. **Testing** — Add test suite for critical paths

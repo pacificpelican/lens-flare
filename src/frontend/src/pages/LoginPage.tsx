@@ -14,7 +14,7 @@ interface RegistrationConfig {
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { login, register, isLoading, error, clearError } = useAuth();
+  const { login, register, isLoading, error, clearError, emailEnabled } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>(() => 
     searchParams.get('mode') === 'register' ? 'register' : 'login'
   );
@@ -174,9 +174,11 @@ export const LoginPage: React.FC = () => {
               Sign In
             </Button>
 
-            <Link to="/forgot-password" className="login-forgot-password">
-              Forgot password?
-            </Link>
+            {emailEnabled && (
+              <Link to="/forgot-password" className="login-forgot-password">
+                Forgot password?
+              </Link>
+            )}
           </form>
         ) : (
           <form onSubmit={handleRegisterSubmit} className="login-form">

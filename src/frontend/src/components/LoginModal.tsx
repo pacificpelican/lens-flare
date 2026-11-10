@@ -19,7 +19,7 @@ interface RegistrationConfig {
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, defaultMode = 'login' }) => {
   const navigate = useNavigate();
-  const { login, register, isLoading, error, clearError } = useAuth();
+  const { login, register, isLoading, error, clearError, emailEnabled } = useAuth();
   const [mode, setMode] = useState<'login' | 'register'>(defaultMode);
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -188,17 +188,19 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, default
               Sign In
             </Button>
 
-            <a
-              href="/forgot-password"
-              className="login-modal-forgot-password"
-              onClick={(e) => {
-                e.preventDefault();
-                handleClose();
-                navigate('/forgot-password');
-              }}
-            >
-              Forgot password?
-            </a>
+            {emailEnabled && (
+              <a
+                href="/forgot-password"
+                className="login-modal-forgot-password"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleClose();
+                  navigate('/forgot-password');
+                }}
+              >
+                Forgot password?
+              </a>
+            )}
           </form>
         ) : (
           <form onSubmit={handleRegisterSubmit} className="login-modal-form">

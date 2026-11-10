@@ -7,6 +7,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   error: string | null;
+  emailEnabled: boolean;
   register: (data: RegisterRequest) => Promise<void>;
   login: (data: LoginRequest) => Promise<void>;
   logout: () => Promise<void>;
@@ -20,12 +21,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [emailEnabled, setEmailEnabled] = useState(false);
 
-  // Check if user is already logged in on mount
+  // Check if user is already logged in and fetch config on mount
   useEffect(() => {
     let isMounted = true;
 
     const initializeAuth = async () => {
+      // Fetch config to check if email is enabled
+      try {
+        const configResponse = await apiClient.getConfig();
+        if (isMounted && configResponse.data?.emailEnabled !== undefined) {
+          setEmailEnabled(configResponse.data.emailEnabled);
+        }
+      } catch (err) {
+        console.error('Failed to fetch config:', err);
+      }
+
       const token = localStorage.getItem('access_token');
       
       // Create a promise that resolves when the auth check completes or times out
@@ -115,6 +127,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isLoading,
     isAuthenticated: !!user,
     error,
+    emailEnabled,
     register,
     login,
     logout,

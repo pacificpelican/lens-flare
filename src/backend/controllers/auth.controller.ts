@@ -251,11 +251,15 @@ export class AuthController {
   async getRegistrationConfig(req: Request, res: Response): Promise<void> {
     try {
       const config = getConfig();
+      const emailProvider = process.env.EMAIL_PROVIDER || 'mailgun';
+      const emailEnabled = emailProvider !== 'none' && emailProvider !== '';
+      
       res.status(200).json({
         success: true,
         data: {
           allowOpenSignups: config.registration.allowOpenSignups,
           requiresInviteCode: !config.registration.allowOpenSignups && config.registration.inviteCodes.length > 0,
+          emailEnabled,
         },
       });
     } catch (error) {

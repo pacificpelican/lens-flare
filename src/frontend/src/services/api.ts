@@ -120,6 +120,11 @@ export class ApiClient {
     return response.data.data;
   }
 
+  async getConfig() {
+    const response = await this.client.get<{ data: { allowOpenSignups: boolean; requiresInviteCode: boolean; emailEnabled: boolean } }>('/api/auth/config');
+    return response.data;
+  }
+
   async getPhotoPdf(params: URLSearchParams): Promise<{ blob: Blob; filename: string }> {
     const response = await this.client.get<Blob>('/api/photos/print', { params, responseType: 'blob' });
     const disposition = response.headers['content-disposition'] as string | undefined;

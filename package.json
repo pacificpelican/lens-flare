@@ -1,6 +1,6 @@
 {
   "name": "lens-flare",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Photo archiver, organizer, and editor with AI descriptions",
   "type": "module",
   "main": "dist/backend/server.js",

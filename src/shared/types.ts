@@ -33,7 +33,7 @@ export interface Photo {
 }
 
 export interface PhotoDetail extends Photo {
-  tags: string[];
+  tags: Tag[];
 }
 
 // Tag types

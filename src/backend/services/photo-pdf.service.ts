@@ -67,7 +67,7 @@ export async function createPhotoPdf(photos: PhotoDetail[], owner: string, print
       ['Updated', photo.updated_at],
       ['Photo ID', photo.id],
       ['User ID', photo.user_id],
-      ['Tags', photo.tags.join(', ')],
+      ['Tags', photo.tags.map((t: any) => t.tag_name).join(', ')],
       ['Description', photo.user_description],
       ['AI description', photo.ai_description],
     ];

@@ -86,15 +86,15 @@ export class PhotoService {
   async getPhotoDetail(photoId: string, userId: string): Promise<PhotoDetail> {
     const photo = await this.getPhoto(photoId, userId);
 
-    // Get tags
-    const tags = await this.db.query<{ tag_name: string }>(
-      `SELECT tag_name FROM tags WHERE photo_id = ? AND user_id = ? ORDER BY tag_name ASC`,
+    // Get tags with full details (id, tag_name, etc.)
+    const tags = await this.db.query<{ id: string; tag_name: string }>(
+      `SELECT id, tag_name FROM tags WHERE photo_id = ? AND user_id = ? ORDER BY tag_name ASC`,
       [photoId, userId]
     );
 
     return {
       ...photo,
-      tags: tags.map((t) => t.tag_name),
+      tags: tags as any,
     };
   }
 

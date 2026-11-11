@@ -24,6 +24,7 @@ export const PhotoDetailPage: React.FC = () => {
   const [showExport, setShowExport] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [isExifExpanded, setIsExifExpanded] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     loadPhoto();
@@ -166,6 +167,30 @@ export const PhotoDetailPage: React.FC = () => {
     } catch (error) {
       console.error('Export failed:', error);
       throw error;
+    }
+  };
+
+  const handleDownloadOriginal = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    if (isDownloading || !photo) return;
+
+    try {
+      setIsDownloading(true);
+      const blob = await apiClient.get<Blob>(photoUrl, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = photo.filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      console.error('Download original failed:', error);
+      alert('Failed to download original photo');
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -348,10 +373,15 @@ export const PhotoDetailPage: React.FC = () => {
 
           {/* Download Button */}
           <div className="photo-detail-section">
-            <a href={photoUrl} download className="photo-detail-download-link">
-              <Button variant="secondary" size="sm" onClick={(e) => e.preventDefault()}>
-                Download Original
-              </Button>
+            <a
+              href={photoUrl}
+              download={photo.filename}
+              className="btn btn-secondary btn-sm photo-detail-download-link"
+              onClick={handleDownloadOriginal}
+              aria-disabled={isDownloading}
+              aria-busy={isDownloading}
+            >
+              {isDownloading ? 'Downloading...' : 'Download Original'}
             </a>
           </div>
 

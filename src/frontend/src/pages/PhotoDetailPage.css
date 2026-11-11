@@ -274,6 +274,11 @@
   text-decoration: none;
 }
 
+.photo-detail-download-link[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: wait;
+}
+
 .photo-detail-section-danger {
   margin-top: auto;
   padding-top: 1rem;

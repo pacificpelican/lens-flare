@@ -1,0 +1,1 @@
+export const MAX_WATERMARK_LENGTH = 200;

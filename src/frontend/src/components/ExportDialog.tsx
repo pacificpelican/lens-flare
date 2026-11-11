@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { MAX_WATERMARK_LENGTH } from '@shared/export-options';
 import { Button } from './Button.js';
 import './ExportDialog.css';
 
 export interface ExportOptions {
   format: 'jpeg' | 'png' | 'webp' | 'avif' | 'tiff';
   quality: number;
+  watermarkText: string;
 }
 
 interface ExportDialogProps {
@@ -50,12 +52,13 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
 }) => {
   const [format, setFormat] = useState<ExportOptions['format']>('jpeg');
   const [quality, setQuality] = useState(80);
+  const [watermarkText, setWatermarkText] = useState('');
   const [isExporting, setIsExporting] = useState(false);
 
   const handleExport = async () => {
     try {
       setIsExporting(true);
-      await onExport({ format, quality });
+      await onExport({ format, quality, watermarkText });
       onClose();
     } catch (error) {
       console.error('Export failed:', error);
@@ -116,6 +119,20 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
               </div>
             </div>
           )}
+
+          <div className="export-section">
+            <label htmlFor="watermark-text" className="export-label">Watermark (optional)</label>
+            <input
+              id="watermark-text"
+              type="text"
+              className="export-watermark-input"
+              maxLength={MAX_WATERMARK_LENGTH}
+              value={watermarkText}
+              onChange={(e) => setWatermarkText(e.target.value)}
+              placeholder="e.g., Your Name Photography"
+            />
+            <p className="export-watermark-help">Text appears in the bottom-right corner of the exported photo.</p>
+          </div>
 
           {/* File Preview Info */}
           <div className="export-section export-info">

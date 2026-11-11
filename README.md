@@ -129,6 +129,7 @@ lens-flare/
 - `PUT /api/photos/:id` — Update photo title, descriptions, tags
 - `DELETE /api/photos/:id` — Delete photo
 - `GET /api/photos/print` — Export photos to PDF with metadata
+- `POST /api/photos/:id/export` — Export a photo in a chosen format, optionally with bottom-right watermark text (`watermarkText`, up to 200 characters). This does not change the stored photo.
 
 ## Setup & Development
 

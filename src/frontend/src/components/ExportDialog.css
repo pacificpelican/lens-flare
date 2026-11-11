@@ -69,13 +69,30 @@
   margin-bottom: 24px;
 }
 
-.export-section h3 {
+.export-section h3,
+.export-label {
+  display: block;
   margin: 0 0 12px 0;
   font-size: 14px;
   font-weight: 600;
   color: #333;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.export-watermark-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.export-watermark-help {
+  margin: 8px 0 0;
+  color: #666;
+  font-size: 12px;
 }
 
 /* Format Cards */

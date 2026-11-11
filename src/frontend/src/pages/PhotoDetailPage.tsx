@@ -149,6 +149,7 @@ export const PhotoDetailPage: React.FC = () => {
         {
           format: options.format,
           quality: options.quality,
+          watermarkText: options.watermarkText,
         },
         {
           responseType: 'blob' as any,

@@ -6,6 +6,8 @@ import { PaginatedResponse, Photo, PhotoDetail } from '@shared/types';
 import fs from 'fs/promises';
 import path from 'path';
 import { createPhotoPdf } from '../services/photo-pdf.service.js';
+import { addWatermark } from '../services/watermark.service.js';
+import { MAX_WATERMARK_LENGTH } from '../../shared/export-options.js';
 
 function getFilters(req: Request) {
   const tags = req.query.tags;
@@ -439,15 +441,25 @@ export class PhotoController {
       }
 
       const { id } = req.params;
-      const { format = 'jpeg', quality = 80 } = req.body as {
+      const { format = 'jpeg', quality = 80, watermarkText } = req.body as {
         format?: string;
         quality?: number;
+        watermarkText?: unknown;
       };
 
       // Validate format
       const validFormats = ['jpeg', 'png', 'webp', 'avif', 'tiff'];
       if (!validFormats.includes(format)) {
         res.status(400).json({ success: false, error: 'Invalid export format' });
+        return;
+      }
+
+      if (watermarkText !== undefined && (
+        typeof watermarkText !== 'string' ||
+        watermarkText.length > MAX_WATERMARK_LENGTH ||
+        /[\x00-\x1f\x7f]/.test(watermarkText)
+      )) {
+        res.status(400).json({ success: false, error: 'Invalid watermark text' });
         return;
       }
 
@@ -474,6 +486,9 @@ export class PhotoController {
       let fileExtension: string;
 
       const sharpImage = sharp(imageBuffer);
+      if (typeof watermarkText === 'string' && watermarkText.trim()) {
+        await addWatermark(sharpImage, watermarkText.trim());
+      }
 
       switch (format) {
         case 'png':

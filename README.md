@@ -1,6 +1,6 @@
 # Lens Flare - Photo Archiver
 
-<img src="src/frontend/public/images/lens-flare-logo-small.png" alt="Lens Flare Logo" width="80" height="80" />
+<img src="src/frontend/public/images/lens-flare-announcement-logo.png" alt="Lens Flare Logo" width="80" height="80" />
 
 A desktop-first web app for archiving, organizing, and editing digital photos with AI-powered descriptions.
 

@@ -155,6 +155,7 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose 
           {activeTab === 'about' && (
             <div className="settings-tab-content">
               <h3>Terms of Service</h3>
+              <p>Date: <time dateTime="2026-11-19">November 19, 2026</time></p>
               <p>
                 Lens Flare is a personal photo archiving and editing tool. By using this application, you agree to:
               </p>
@@ -174,6 +175,7 @@ export const SettingsDialog: React.FC<SettingsDialogProps> = ({ isOpen, onClose 
           {activeTab === 'privacy' && (
             <div className="settings-tab-content">
               <h3>Privacy Policy</h3>
+              <p>Date: <time dateTime="2026-11-19">November 19, 2026</time></p>
               <p>
                 <strong>Data Collection:</strong> Lens Flare stores all your photos and metadata locally or on your
                 configured server. No data is collected by third parties unless you explicitly configure external AI

@@ -192,7 +192,7 @@ export const GalleryPage: React.FC = () => {
       <header className="gallery-header">
         <div className="gallery-header-content">
           <div className="gallery-title-section">
-            <img src="/images/lens-flare-logo.png" alt="Lens Flare" className="gallery-logo-badge" />
+            <img src="/images/lens-flare-announcement-logo.png" alt="Lens Flare" className="gallery-logo-badge" />
             <h1 className="gallery-title">Lens Flare</h1>
           </div>
           <div className="gallery-header-right">

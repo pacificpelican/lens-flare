@@ -71,7 +71,7 @@ function getAiConfig(): AiConfig {
   if (provider === 'ollama') {
     config.endpoint = process.env.OLLAMA_ENDPOINT || 'http://localhost:11434';
     config.model = process.env.OLLAMA_MODEL || 'llava:latest';
-    config.imageModel = process.env.OLLAMA_IMAGE_MODEL || 'flux2-klein:4b';
+    config.imageModel = process.env.OLLAMA_IMAGE_MODEL || 'x/flux2-klein:4b';
   } else if (provider === 'openai') {
     config.apiKey = process.env.OPENAI_API_KEY;
     config.model = process.env.OPENAI_MODEL || 'gpt-4-vision';

@@ -32,7 +32,7 @@ async function withOllama(handler, run) {
   }
 }
 
-const config = (endpoint, overrides = {}) => ({ enabled: true, provider: 'ollama', endpoint, model: 'llava:latest', imageModel: 'flux2-klein:4b', ...overrides });
+const config = (endpoint, overrides = {}) => ({ enabled: true, provider: 'ollama', endpoint, model: 'llava:latest', imageModel: 'x/flux2-klein:4b', ...overrides });
 
 function response() {
   const res = { statusCode: 0, body: undefined, writableEnded: false, handlers: {} };
@@ -49,7 +49,7 @@ test('image service streams progress from the image model and returns the final 
   }, async (endpoint, requests) => {
     const image = await new ImageGenerationService(config(endpoint)).generateImage('a cat');
     assert.deepEqual(image, IMAGE);
-    assert.equal(requests[0].model, 'flux2-klein:4b');
+    assert.equal(requests[0].model, 'x/flux2-klein:4b');
     assert.equal(requests[0].prompt, 'a cat');
   });
 });

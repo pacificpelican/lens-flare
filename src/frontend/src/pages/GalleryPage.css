@@ -182,7 +182,8 @@
   transform: scale(0.98);
 }
 
-.gallery-print-btn {
+.gallery-print-btn,
+.gallery-generate-btn {
   width: 42px;
   height: 42px;
   flex: 0 0 42px;
@@ -195,7 +196,8 @@
   cursor: pointer;
 }
 
-.gallery-print-btn:hover:not(:disabled) {
+.gallery-print-btn:hover:not(:disabled),
+.gallery-generate-btn:hover {
   background: #f3f0ff;
   border-color: #7c3aed;
   color: #7c3aed;

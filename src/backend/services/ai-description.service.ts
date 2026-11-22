@@ -5,6 +5,7 @@ export interface AiConfig {
   provider: 'ollama' | 'openai' | 'anthropic' | 'none';
   endpoint?: string;
   model?: string;
+  imageModel?: string;
   apiKey?: string;
 }
 

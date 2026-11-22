@@ -1,0 +1,1 @@
+export const MAX_GENERATION_PROMPT_LENGTH = 1000;

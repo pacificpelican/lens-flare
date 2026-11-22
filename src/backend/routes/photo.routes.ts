@@ -66,6 +66,10 @@ export function createPhotoRoutes(
     })
   );
 
+  router.post('/generate', authMiddleware, (req, res, next) =>
+    accountOperations.run(req, res, next, () => photoController.generate(req, res))
+  );
+
   router.get('/', authMiddleware, (req: Request, res: Response) =>
     photoController.list(req, res)
   );

@@ -2,12 +2,15 @@ import { Request, Response } from 'express';
 import { PhotoService } from '../services/photo.service.js';
 import { ExifService } from '../services/exif.service.js';
 import { AiDescriptionService } from '../services/ai-description.service.js';
+import { ImageGenerationError, ImageGenerationService } from '../services/ai-image.service.js';
 import { PaginatedResponse, Photo, PhotoDetail } from '@shared/types';
 import fs from 'fs/promises';
 import path from 'path';
+import crypto from 'crypto';
 import { createPhotoPdf } from '../services/photo-pdf.service.js';
 import { addWatermark } from '../services/watermark.service.js';
 import { MAX_WATERMARK_LENGTH } from '../../shared/export-options.js';
+import { MAX_GENERATION_PROMPT_LENGTH } from '../../shared/image-generation.js';
 
 function getFilters(req: Request) {
   const tags = req.query.tags;
@@ -26,7 +29,8 @@ export class PhotoController {
     private photoService: PhotoService,
     private exifService: ExifService,
     private aiDescriptionService: AiDescriptionService,
-    private uploadDir: string
+    private uploadDir: string,
+    private imageGenerationService?: ImageGenerationService
   ) {}
 
   private async getPhotoWithExif(photoId: string, userId: string): Promise<PhotoDetail> {
@@ -128,6 +132,62 @@ export class PhotoController {
     } catch (error) {
       console.error('Upload error:', error);
       res.status(500).json({ success: false, error: 'Upload failed' });
+    }
+  }
+
+  async generate(req: Request, res: Response): Promise<void> {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: 'Not authenticated' });
+      return;
+    }
+
+    const prompt = typeof req.body?.prompt === 'string' ? req.body.prompt.trim() : '';
+    if (!prompt) {
+      res.status(400).json({ success: false, error: 'A prompt is required' });
+      return;
+    }
+    if (prompt.length > MAX_GENERATION_PROMPT_LENGTH) {
+      res.status(400).json({
+        success: false,
+        error: `Prompt must be ${MAX_GENERATION_PROMPT_LENGTH} characters or fewer`,
+      });
+      return;
+    }
+    if (!this.imageGenerationService?.isEnabled()) {
+      res.status(503).json({ success: false, error: 'Image generation is not enabled on this server' });
+      return;
+    }
+
+    const clientDisconnected = new AbortController();
+    res.on('close', () => {
+      if (!res.writableEnded) clientDisconnected.abort();
+    });
+
+    let filename: string | undefined;
+    try {
+      const imageBuffer = await this.imageGenerationService.generateImage(prompt, clientDisconnected.signal);
+      filename = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}.png`;
+      await fs.writeFile(path.join(this.uploadDir, filename), imageBuffer);
+
+      const photo = await this.photoService.createPhoto({
+        userId: req.user.user_id,
+        filename,
+        originalFilename: filename,
+        title: prompt.length > 80 ? `${prompt.slice(0, 77)}...` : prompt,
+        mimeType: 'image/png',
+        fileSize: imageBuffer.length,
+        aiDescription: `AI-generated image. Prompt: ${prompt}`,
+      });
+
+      res.status(201).json({ success: true, data: photo });
+    } catch (error) {
+      if (filename) await fs.unlink(path.join(this.uploadDir, filename)).catch(() => undefined);
+      console.error('Image generation error:', error instanceof Error ? error.message : error);
+      if (error instanceof ImageGenerationError) {
+        res.status(error.status).json({ success: false, error: error.message });
+      } else {
+        res.status(500).json({ success: false, error: 'Image generation failed' });
+      }
     }
   }
 

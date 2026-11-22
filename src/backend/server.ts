@@ -8,6 +8,7 @@ import { AuthService } from './services/auth.service.js';
 import { PhotoService } from './services/photo.service.js';
 import { ExifService } from './services/exif.service.js';
 import { AiDescriptionService } from './services/ai-description.service.js';
+import { ImageGenerationService } from './services/ai-image.service.js';
 import { AuthController } from './controllers/auth.controller.js';
 import { PhotoController } from './controllers/photo.controller.js';
 import { createAuthRoutes } from './routes/auth.routes.js';
@@ -35,6 +36,7 @@ async function bootstrap() {
   const photoService = new PhotoService(db);
   const exifService = new ExifService();
   const aiDescriptionService = new AiDescriptionService(config.ai);
+  const imageGenerationService = new ImageGenerationService(config.ai);
 
   // Log AI configuration
   if (aiDescriptionService.isEnabled()) {
@@ -42,12 +44,15 @@ async function bootstrap() {
   } else {
     console.log('🤖 AI disabled');
   }
+  if (imageGenerationService.isEnabled()) {
+    console.log(`🎨 Image generation enabled: ${config.ai.imageModel}`);
+  }
 
   // Create controllers
   const uploadDir = path.join(process.cwd(), 'uploads');
   await mkdir(uploadDir, { recursive: true });
   const authController = new AuthController(db, authService, uploadDir);
-  const photoController = new PhotoController(photoService, exifService, aiDescriptionService, uploadDir);
+  const photoController = new PhotoController(photoService, exifService, aiDescriptionService, uploadDir, imageGenerationService);
 
   // Create middleware
   const authMiddleware = createAuthMiddleware(authService);
@@ -91,6 +96,8 @@ async function bootstrap() {
           enabled: aiDescriptionService.isEnabled(),
           provider: config.ai.provider,
           model: config.ai.model,
+          imageGenerationEnabled: imageGenerationService.isEnabled(),
+          imageModel: config.ai.imageModel,
         },
         php: {
           available: false,

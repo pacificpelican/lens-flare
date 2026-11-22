@@ -9,7 +9,8 @@ import { SearchBar } from '../components/SearchBar';
 import { FilterPanel } from '../components/FilterPanel';
 import { SettingsDialog } from '../components/SettingsDialog.js';
 import { Button } from '../components/Button';
-import { Printer } from 'lucide-react';
+import { Printer, CodeXml } from 'lucide-react';
+import { ImageGenerationModal } from '../components/ImageGenerationModal';
 import './GalleryPage.css';
 
 type PhotoFilters = {
@@ -48,6 +49,7 @@ export const GalleryPage: React.FC = () => {
   const [printing, setPrinting] = useState(false);
   const [printError, setPrintError] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [isGenerateOpen, setIsGenerateOpen] = useState(false);
 
   useEffect(() => {
     loadPhotos();
@@ -177,6 +179,14 @@ export const GalleryPage: React.FC = () => {
     }
   };
 
+  const handleGenerated = () => {
+    if (page === 1) {
+      loadPhotos();
+    } else {
+      setPage(1);
+    }
+  };
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -262,6 +272,14 @@ export const GalleryPage: React.FC = () => {
         >
           <Printer size={20} aria-hidden="true" />
         </button>
+        <button
+          className="gallery-generate-btn"
+          onClick={() => setIsGenerateOpen(true)}
+          title="Generate an image from a prompt"
+          aria-label="Generate an image from a prompt"
+        >
+          <CodeXml size={20} aria-hidden="true" />
+        </button>
       </div>
       {printing && <p className="gallery-print-status" role="status">Preparing photo PDF...</p>}
       {printError && <p className="gallery-print-error" role="alert">{printError}</p>}
@@ -291,6 +309,13 @@ export const GalleryPage: React.FC = () => {
           </Button>
         </div>
       )}
+
+      {/* Image Generation Modal */}
+      <ImageGenerationModal
+        isOpen={isGenerateOpen}
+        onClose={() => setIsGenerateOpen(false)}
+        onGenerated={handleGenerated}
+      />
 
       {/* Camera Modal */}
       <CameraModal 

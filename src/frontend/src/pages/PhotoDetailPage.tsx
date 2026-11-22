@@ -25,6 +25,7 @@ export const PhotoDetailPage: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [isExifExpanded, setIsExifExpanded] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   useEffect(() => {
     loadPhoto();
@@ -195,6 +196,27 @@ export const PhotoDetailPage: React.FC = () => {
     }
   };
 
+  const handlePrint = async () => {
+    if (!photoId || isPrinting) return;
+    try {
+      setIsPrinting(true);
+      const response = await apiClient.getSinglePhotoPdf(photoId);
+      const url = URL.createObjectURL(response.blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = response.filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      console.error('Photo PDF failed:', err);
+      alert('Could not create the photo PDF. Please try again.');
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
   if (isLoading) {
     return <div className="photo-detail-loading">Loading photo...</div>;
   }
@@ -222,6 +244,10 @@ export const PhotoDetailPage: React.FC = () => {
           <Button variant="primary" size="sm" vertical onClick={() => setShowSettings(true)} title="Settings">
             <span>⚙️</span>
             <span>Settings</span>
+          </Button>
+          <Button variant="primary" size="sm" vertical onClick={handlePrint} disabled={isPrinting} title="Download photo PDF">
+            <span>🖨️</span>
+            <span>{isPrinting ? 'Preparing...' : 'Print'}</span>
           </Button>
           <Button variant="primary" size="sm" vertical onClick={() => setShowExport(true)}>
             <span>⬇️</span>

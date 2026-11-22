@@ -93,6 +93,21 @@ test('photo PDF exports all filtered pages, metadata, and the closing page', asy
     assert.ok(logoOps.includes(OPS.paintImageXObject) || logoOps.includes(OPS.paintJpegXObject));
     await pdf.cleanup();
 
+    const single = await fetch(`${base}/api/photos/photo-3/print`, { headers: { authorization: `Bearer ${first.access_token}` } });
+    assert.equal(single.status, 200, output);
+    assert.match(single.headers.get('content-disposition'), /filename="Lens_Flare_photo__.*\.pdf"/);
+    const singlePdf = await getDocument({ data: new Uint8Array(await single.arrayBuffer()), useSystemFonts: true }).promise;
+    assert.equal(singlePdf.numPages, 2);
+    const singleText = async (pageNumber) => (await (await singlePdf.getPage(pageNumber)).getTextContent()).items.map((item) => item.str).join(' ');
+    const singleFirst = await singleText(1);
+    assert.match(singleFirst, /Camera Owner Photos/);
+    assert.match(singleFirst, /Photo 3/);
+    assert.doesNotMatch(singleFirst, /Photo 4/);
+    assert.match(await singleText(2), /https:\/\/github\.com\/pacificpelican\/lens-flare/);
+    await singlePdf.cleanup();
+    assert.equal((await fetch(`${base}/api/photos/photo-3/print`)).status, 401);
+    assert.equal((await fetch(`${base}/api/photos/other-photo/print`, { headers: { authorization: `Bearer ${first.access_token}` } })).status, 404);
+
     const longPdfData = await createPhotoPdf([{
       id: 'long', user_id: first.user.id, filename: 'test.jpg', original_filename: 'original.jpg', title: 'Long notes',
       user_description: `${'A long description with details. '.repeat(400)} END-OF-NOTES`, ai_description: null,

@@ -262,6 +262,33 @@ export class PhotoController {
     }
   }
 
+  async printOne(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ success: false, error: 'Not authenticated' });
+        return;
+      }
+      const userId = req.user.user_id;
+      let photo: PhotoDetail;
+      try {
+        photo = await this.getPhotoWithExif(req.params.id, userId);
+      } catch {
+        res.status(404).json({ success: false, error: 'Photo not found' });
+        return;
+      }
+      const owner = await this.photoService.getOwnerName(userId);
+      const printedAt = new Date();
+      const pdf = await createPhotoPdf([photo], owner, printedAt, this.uploadDir);
+      const timestamp = printedAt.toISOString().replace(/[:.]/g, '-');
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="Lens_Flare_photo__${timestamp}.pdf"`);
+      res.send(pdf);
+    } catch (error) {
+      console.error('Print photo error:', error);
+      res.status(500).json({ success: false, error: 'Failed to create photo PDF' });
+    }
+  }
+
   async getFilterOptions(req: Request, res: Response): Promise<void> {
     try {
       if (!req.user) {

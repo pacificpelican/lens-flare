@@ -9,7 +9,7 @@ import path from 'path';
 import crypto from 'crypto';
 import { createPhotoPdf } from '../services/photo-pdf.service.js';
 import { addWatermark } from '../services/watermark.service.js';
-import { MAX_WATERMARK_LENGTH } from '../../shared/export-options.js';
+import { MAX_WATERMARK_LENGTH, MAX_EXPORT_DIMENSION } from '../../shared/export-options.js';
 import { MAX_GENERATION_PROMPT_LENGTH } from '../../shared/image-generation.js';
 
 function getFilters(req: Request) {
@@ -528,10 +528,11 @@ export class PhotoController {
       }
 
       const { id } = req.params;
-      const { format = 'jpeg', quality = 80, watermarkText } = req.body as {
+      const { format = 'jpeg', quality = 80, watermarkText, resize } = req.body as {
         format?: string;
         quality?: number;
         watermarkText?: unknown;
+        resize?: unknown;
       };
 
       // Validate format
@@ -548,6 +549,18 @@ export class PhotoController {
       )) {
         res.status(400).json({ success: false, error: 'Invalid watermark text' });
         return;
+      }
+
+      let resizeDimensions: { width: number; height: number } | undefined;
+      if (resize !== undefined && resize !== null) {
+        const { width, height } = resize as { width?: unknown; height?: unknown };
+        const isValidDimension = (value: unknown): value is number =>
+          typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= MAX_EXPORT_DIMENSION;
+        if (typeof resize !== 'object' || !isValidDimension(width) || !isValidDimension(height)) {
+          res.status(400).json({ success: false, error: 'Invalid resize dimensions' });
+          return;
+        }
+        resizeDimensions = { width, height };
       }
 
       // Validate quality (1-100)
@@ -572,7 +585,16 @@ export class PhotoController {
       let contentType: string;
       let fileExtension: string;
 
-      const sharpImage = sharp(imageBuffer);
+      // Resize before watermarking so the watermark is sized relative to the output
+      let sourceBuffer: Buffer = imageBuffer;
+      if (resizeDimensions) {
+        sourceBuffer = await sharp(imageBuffer)
+          .rotate()
+          .resize(resizeDimensions.width, resizeDimensions.height, { fit: 'fill' })
+          .toBuffer();
+      }
+
+      const sharpImage = sharp(sourceBuffer);
       if (typeof watermarkText === 'string' && watermarkText.trim()) {
         await addWatermark(sharpImage, watermarkText.trim());
       }

@@ -151,6 +151,7 @@ export const PhotoDetailPage: React.FC = () => {
           format: options.format,
           quality: options.quality,
           watermarkText: options.watermarkText,
+          resize: options.resize,
         },
         {
           responseType: 'blob' as any,
@@ -450,6 +451,7 @@ export const PhotoDetailPage: React.FC = () => {
       <ExportDialog
         isOpen={showExport}
         photoTitle={photo?.title || 'photo'}
+        imageUrl={photoUrl}
         onExport={handleExport}
         onClose={() => setShowExport(false)}
       />

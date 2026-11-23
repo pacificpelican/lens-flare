@@ -1,1 +1,2 @@
 export const MAX_WATERMARK_LENGTH = 200;
+export const MAX_EXPORT_DIMENSION = 16383;

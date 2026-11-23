@@ -95,6 +95,40 @@
   font-size: 12px;
 }
 
+.export-resize-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.export-resize-input {
+  width: 100px;
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.export-resize-separator,
+.export-resize-unit {
+  color: #666;
+}
+
+.export-resize-reset {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #7c3aed;
+  cursor: pointer;
+  font: inherit;
+}
+
+.export-resize-reset:disabled {
+  color: #aaa;
+  cursor: default;
+}
+
 /* Format Cards */
 .export-formats {
   display: grid;

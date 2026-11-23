@@ -32,9 +32,12 @@ interface CropSelectRect {
   height: number;
 }
 
+const CROP_CANVAS_WIDTH = 600;
+
 export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onClose, onSave }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cropCanvasRef = useRef<HTMLCanvasElement>(null);
+  const cropAnchorRef = useRef<{ x: number; y: number } | null>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -87,7 +90,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onClose, onS
       drawImage(image, currentState);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [image, currentState]);
+  }, [image, currentState, cropMode]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -214,6 +217,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onClose, onS
     return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
   };
 
+  const getSourceRegion = (img: HTMLImageElement, state: EditState): CropSelectRect =>
+    state.cropRect ?? { x: 0, y: 0, width: img.width, height: img.height };
+
   const drawImage = (img: HTMLImageElement, state: EditState) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -221,9 +227,10 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onClose, onS
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Set canvas size
-    const displayWidth = Math.min(img.width * state.scale, 600);
-    const displayHeight = (displayWidth / img.width) * img.height;
+    // Size the canvas from the cropped region so the aspect ratio is preserved
+    const region = getSourceRegion(img, state);
+    const displayWidth = Math.min(region.width * state.scale, 600);
+    const displayHeight = (displayWidth / region.width) * region.height;
     canvas.width = displayWidth;
     canvas.height = displayHeight;
 
@@ -415,19 +422,39 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onClose, onS
     if (!cropMode || !cropCanvasRef.current || !image) return;
 
     const canvas = cropCanvasRef.current;
-    canvas.width = 600;
-    canvas.height = (600 / image.width) * image.height;
+    const region = getSourceRegion(image, currentState);
+    canvas.width = CROP_CANVAS_WIDTH;
+    canvas.height = (CROP_CANVAS_WIDTH / region.width) * region.height;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Draw semi-transparent dark overlay
+    const drawSource = () =>
+      ctx.drawImage(
+        image,
+        region.x,
+        region.y,
+        region.width,
+        region.height,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+    // Draw the image, dimmed
+    drawSource();
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    if (cropSelect) {
-      // Draw clear crop area
-      ctx.clearRect(cropSelect.x, cropSelect.y, cropSelect.width, cropSelect.height);
+    if (cropSelect && cropSelect.width > 0 && cropSelect.height > 0) {
+      // Redraw the selected area at full brightness
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(cropSelect.x, cropSelect.y, cropSelect.width, cropSelect.height);
+      ctx.clip();
+      drawSource();
+      ctx.restore();
 
       // Draw border around crop area
       ctx.strokeStyle = '#7c3aed';
@@ -451,49 +478,71 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onClose, onS
 
   useEffect(() => {
     drawCropOverlay();
-  }, [cropMode, cropSelect, image]);
+  }, [cropMode, cropSelect, image, currentState.cropRect]);
+
+  const getCropPoint = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = cropCanvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return null;
+
+    // The canvas may be displayed at a different size than its pixel size
+    const x = ((e.clientX - rect.left) * canvas.width) / rect.width;
+    const y = ((e.clientY - rect.top) * canvas.height) / rect.height;
+    return {
+      x: Math.min(canvas.width, Math.max(0, x)),
+      y: Math.min(canvas.height, Math.max(0, y)),
+    };
+  };
 
   const handleCropStart = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!cropMode) return;
-    const rect = cropCanvasRef.current?.getBoundingClientRect();
-    if (!rect) return;
+    const point = getCropPoint(e);
+    if (!point) return;
 
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    setCropSelect({ x, y, width: 0, height: 0 });
+    cropAnchorRef.current = point;
+    setCropSelect({ x: point.x, y: point.y, width: 0, height: 0 });
     setIsSelectingCrop(true);
   };
 
   const handleCropMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isSelectingCrop || !cropSelect) return;
+    const anchor = cropAnchorRef.current;
+    const canvas = cropCanvasRef.current;
+    if (!isSelectingCrop || !anchor || !canvas) return;
 
-    const rect = cropCanvasRef.current?.getBoundingClientRect();
-    if (!rect) return;
+    const point = getCropPoint(e);
+    if (!point) return;
 
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    let width = x - cropSelect.x;
-    let height = y - cropSelect.y;
+    const dirX = point.x >= anchor.x ? 1 : -1;
+    const dirY = point.y >= anchor.y ? 1 : -1;
+    let width = Math.abs(point.x - anchor.x);
+    let height = Math.abs(point.y - anchor.y);
 
     // Apply aspect ratio constraint
     if (cropAspectRatio !== 'free') {
       const ratios: Record<string, number> = { '1:1': 1, '16:9': 16 / 9, '4:3': 4 / 3 };
       const ratio = ratios[cropAspectRatio];
 
-      if (Math.abs(width) / Math.abs(height) > ratio) {
+      if (height === 0 || width / height > ratio) {
         height = width / ratio;
       } else {
         width = height * ratio;
       }
+
+      // Keep the constrained rectangle inside the image
+      const maxWidth = dirX > 0 ? canvas.width - anchor.x : anchor.x;
+      const maxHeight = dirY > 0 ? canvas.height - anchor.y : anchor.y;
+      const fit = Math.min(1, maxWidth / width || 1, maxHeight / height || 1);
+      width *= fit;
+      height *= fit;
     }
 
-    setCropSelect((prev) => ({
-      ...prev!,
+    setCropSelect({
+      x: dirX > 0 ? anchor.x : anchor.x - width,
+      y: dirY > 0 ? anchor.y : anchor.y - height,
       width,
       height,
-    }));
+    });
   };
 
   const handleCropEnd = () => {
@@ -501,15 +550,19 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onClose, onS
   };
 
   const applyCrop = () => {
-    if (!cropSelect || !image) return;
+    const canvas = cropCanvasRef.current;
+    if (!cropSelect || !image || !canvas) return;
+    if (cropSelect.width < 1 || cropSelect.height < 1) return;
 
-    // Convert canvas coordinates to image coordinates
-    const scale = image.width / 600;
+    // Convert crop canvas coordinates to original image coordinates,
+    // relative to the region currently being shown
+    const region = getSourceRegion(image, currentState);
+    const scale = region.width / canvas.width;
     const cropRect = {
-      x: Math.max(0, cropSelect.x * scale),
-      y: Math.max(0, cropSelect.y * scale),
-      width: Math.min(image.width, cropSelect.width * scale),
-      height: Math.min(image.height, cropSelect.height * scale),
+      x: region.x + cropSelect.x * scale,
+      y: region.y + cropSelect.y * scale,
+      width: cropSelect.width * scale,
+      height: cropSelect.height * scale,
     };
 
     updateState({ cropRect });
@@ -653,7 +706,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({ imageUrl, onClose, onS
                 <button
                   className="btn btn-primary btn-full"
                   onClick={applyCrop}
-                  disabled={!cropSelect || (cropSelect.width === 0 && cropSelect.height === 0)}
+                  disabled={!cropSelect || cropSelect.width < 1 || cropSelect.height < 1}
                 >
                   Apply Crop
                 </button>
